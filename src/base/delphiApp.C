@@ -4,6 +4,8 @@
 #include "ModulesApp.h"
 #include "MooseSyntax.h"
 
+#include "DelPhiSyntax.h"
+
 InputParameters
 delphiApp::validParams()
 {
@@ -27,6 +29,7 @@ delphiApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
   Registry::registerActionsTo(af, {"delphiApp"});
 
   /* register custom execute flags, action syntax, etc. here */
+  DelPhi::associateSyntax(syntax, af);
 }
 
 void
