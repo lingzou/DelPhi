@@ -58,6 +58,7 @@ struct PETScApp
   Vec res_spatial;
 
   void setupPETScWorkSpace();
+  void setupPETScIC();
   void setupMatrices();
   void freePETScWorkSpace();
 };

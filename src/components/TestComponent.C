@@ -137,10 +137,10 @@ void
 TestComponent::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
 {
   // When loop, use int, not unsigned int; 'col' might go below 0, unsigned won't handle correctly
-  for (int row = 0; row < _n_DOFs; row++)
+  for (int row = 0; row < int(_n_DOFs); row++)
     for (int col = row - 1; col <= row + 1; col++)
     {
-      if (col >= 0 && col < _n_DOFs)
+      if (col >= 0 && col < int(_n_DOFs))
         mnzp->addEntry(row + _DOF_offset, col + _DOF_offset);
     }
 }

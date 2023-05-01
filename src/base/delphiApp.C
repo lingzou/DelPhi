@@ -3,7 +3,7 @@
 #include "AppFactory.h"
 #include "ModulesApp.h"
 #include "MooseSyntax.h"
-
+#include "FluidPropertiesApp.h"
 #include "DelPhiSyntax.h"
 
 InputParameters
@@ -25,6 +25,8 @@ void
 delphiApp::registerAll(Factory & f, ActionFactory & af, Syntax & syntax)
 {
   ModulesApp::registerAll(f, af, syntax);
+  FluidPropertiesApp::registerAll(f, af, syntax);
+
   Registry::registerObjectsTo(f, {"delphiApp"});
   Registry::registerActionsTo(af, {"delphiApp"});
 

@@ -3,6 +3,7 @@
 registerMooseAction("delphiApp", SetupDelPhiSimulation, "init_delphi_simulation");
 registerMooseAction("delphiApp", SetupDelPhiSimulation, "build_mesh");
 registerMooseAction("delphiApp", SetupDelPhiSimulation, "add_delphi_variables");
+//registerMooseAction("delphiApp", SetupDelPhiSimulation, "setup_delphi_ICs");
 
 InputParameters
 SetupDelPhiSimulation::validParams()
@@ -38,6 +39,13 @@ SetupDelPhiSimulation::act()
     // sim_ptr->addExternalVariables();
     Moose::out << "OK" << std::endl;
   }
+  /*
+  else if (_current_task == "setup_delphi_ICs")
+  {
+    Moose::out << "Setup PETSc initial conditions... ";
+    sim_ptr->setupIC();
+    Moose::out << "OK" << std::endl;
+  }*/
   else
     mooseError("Unknown task associated with SetupDelPhiSimulation: " + _current_task);
 }

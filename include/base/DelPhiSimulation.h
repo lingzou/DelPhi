@@ -25,6 +25,7 @@ public:
   virtual void buildMesh();
 
   // Residual functions - related to PETSc
+  virtual void setupPETScIC(double * u);
   virtual void updateSolutions(double * u);
   virtual void computeTranRes(double * r);
   virtual void computeSpatialRes(double * r);

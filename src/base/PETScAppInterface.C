@@ -47,6 +47,15 @@ PETScApp::setupPETScWorkSpace()
 }
 
 void
+PETScApp::setupPETScIC()
+{
+  PetscScalar *uu;
+  VecGetArray(u, &uu);
+  p_sim->setupPETScIC(uu);
+  VecRestoreArray(u, &uu);
+}
+
+void
 PETScApp::setupMatrices()
 {
   // This should go to user-input

@@ -53,15 +53,21 @@ DelPhiSimulation::buildMesh()
 void
 DelPhiSimulation::addExternalVariables()
 {
+  std::cerr << "DelPhiSimulation::addExternalVariables()\n";
   // Let each component add their variables info
   for (auto & comp : _components)
   {
+    std::cerr << "comp = " << comp->name() << std::endl;
     comp->setDOFoffset(_n_DOFs);
+    std::cerr << "comp->addExternalVariables()\n";
     comp->addExternalVariables();
     _n_DOFs += comp->getNDOF();
   }
   _p_PETScApp->n_dofs = _n_DOFs;
+  std::cerr << "setupPETScWorkSpace()\n";
   _p_PETScApp->setupPETScWorkSpace();
+  std::cerr << "setupPETScIC()\n";
+  _p_PETScApp->setupPETScIC();
 
   // After collecting all variables info, let FEProblemBase add them
   for (auto & var : _vars)
@@ -78,6 +84,7 @@ DelPhiSimulation::addExternalVariables()
     var_params.set<std::vector<SubdomainName>>("block") = subdomains;
     FEProblemBase::addAuxVariable("MooseVariable", name, var_params);
   }
+  std::cerr << "DelPhiSimulation::addExternalVariables() END\n";
 }
 
 void
@@ -115,6 +122,16 @@ DelPhiSimulation::addMooseAuxVar(const std::string & name,
     FEProblemBase::addInitialCondition(
         "ConstantIC", name + std::string(":") + subdomain + std::string(":constIC"), params);
   }*/
+}
+
+void
+DelPhiSimulation::setupPETScIC(double * u)
+{
+  for (auto & comp : _components)
+  {
+    unsigned offset = comp->getDOFoffset();
+    comp->setupIC(u + offset);
+  }
 }
 
 void

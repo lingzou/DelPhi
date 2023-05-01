@@ -17,6 +17,7 @@ associateSyntax(Syntax & syntax, ActionFactory & /*action_factory*/)
   registerTask("init_delphi_simulation", true);
   registerTask("build_mesh", true);
   registerTask("add_delphi_variables", true);
+  registerTask("setup_delphi_ICs", true);
 
   try
   {
@@ -26,6 +27,8 @@ associateSyntax(Syntax & syntax, ActionFactory & /*action_factory*/)
     syntax.addDependency("build_mesh", "init_delphi_simulation");
     syntax.addDependency("init_mesh", "build_mesh");
     syntax.addDependency("add_delphi_variables", "init_mesh");
+    syntax.addDependency("add_delphi_variables", "add_user_object");
+    //syntax.addDependency("setup_delphi_ICs", "add_external_aux_variables");
   }
   catch (CyclicDependencyException<std::string> & e)
   {

@@ -14,6 +14,9 @@ public:
   virtual void addExternalVariables()
   { /*not all components have variables*/
   }
+  virtual void setupIC(double * /*u*/)
+  { /*not all components have initial conditions*/
+  }
   virtual void onTimestepBegin()
   { /*not all components need act at time step begin*/
   }
