@@ -17,7 +17,7 @@ public:
   MatrixNonZeroPattern(unsigned size) { _non_zero_entries.resize(size); }
   virtual ~MatrixNonZeroPattern() {}
   virtual void addEntry(unsigned row, unsigned col) { _non_zero_entries[row].insert(col); }
-  virtual void addRow(unsigned row, std::vector<unsigned> & cols)
+  virtual void addRow(unsigned row, std::set<unsigned> & cols)
   {
     for (auto & col : cols)
       addEntry(row, col);

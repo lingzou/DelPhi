@@ -63,6 +63,10 @@ DelPhiSimulation::addExternalVariables()
     comp->addExternalVariables();
     _n_DOFs += comp->getNDOF();
   }
+
+  for (auto & comp : _components)
+    comp->setExtendedNeighbors();
+
   _p_PETScApp->n_dofs = _n_DOFs;
   std::cerr << "setupPETScWorkSpace()\n";
   _p_PETScApp->setupPETScWorkSpace();
@@ -127,11 +131,13 @@ DelPhiSimulation::addMooseAuxVar(const std::string & name,
 void
 DelPhiSimulation::setupPETScIC(double * u)
 {
+  std::cerr << "DelPhiSimulation::setupPETScIC()\n";
   for (auto & comp : _components)
   {
     unsigned offset = comp->getDOFoffset();
     comp->setupIC(u + offset);
   }
+  std::cerr << "DelPhiSimulation::setupPETScIC() END\n";
 }
 
 void
