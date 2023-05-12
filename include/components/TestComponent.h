@@ -2,7 +2,7 @@
 
 #include "DelPhiComponent.h"
 
-class TestComponent : public DelPhiComponent
+class TestComponent : public OneDComponent
 {
 public:
   TestComponent(const InputParameters & parameters);

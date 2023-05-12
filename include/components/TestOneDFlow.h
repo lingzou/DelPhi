@@ -4,7 +4,7 @@
 #include "SinglePhaseFluidProperties.h"
 #include "OneDFlowModel.h"
 
-class TestOneDFlow : public DelPhiComponent
+class TestOneDFlow : public OneDComponent
 {
 public:
   TestOneDFlow(const InputParameters & parameters);

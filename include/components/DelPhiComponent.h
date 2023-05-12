@@ -62,3 +62,23 @@ protected:
 public:
   static InputParameters validParams();
 };
+
+class OneDComponent : public DelPhiComponent
+{
+public:
+  OneDComponent(const InputParameters & parameters) : DelPhiComponent(parameters) {}
+  virtual ~OneDComponent() {}
+
+public:
+  static InputParameters validParams();
+};
+
+class ZeroDComponent : public DelPhiComponent
+{
+public:
+  ZeroDComponent(const InputParameters & parameters) : DelPhiComponent(parameters) {}
+  virtual ~ZeroDComponent() {}
+
+public:
+  static InputParameters validParams();
+};

@@ -21,3 +21,17 @@ DelPhiComponent::DelPhiComponent(const InputParameters & parameters)
     _DOF_offset(0)
 {
 }
+
+InputParameters
+OneDComponent::validParams()
+{
+  InputParameters params = DelPhiComponent::validParams();
+  return params;
+}
+
+InputParameters
+ZeroDComponent::validParams()
+{
+  InputParameters params = DelPhiComponent::validParams();
+  return params;
+}

@@ -5,6 +5,8 @@
 #include "PETScAppInterface.h"
 
 class DelPhiComponent;
+class OneDComponent;
+class ZeroDComponent;
 
 class DelPhiSimulation : public ExternalProblem
 {
@@ -59,6 +61,9 @@ protected:
 
   /// List of components in this simulation
   std::vector<MooseSharedPointer<DelPhiComponent>> _components;
+  /// components in different 'buckets'
+  std::vector<OneDComponent*> _components_1d;
+  std::vector<ZeroDComponent*> _components_0d;
 
   /// Variables for output purpose <var_name, sub_domain_set>
   std::map<std::string, VariableInfo> _vars;

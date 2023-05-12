@@ -6,7 +6,7 @@ registerMooseObject("delphiApp", TestComponent);
 InputParameters
 TestComponent::validParams()
 {
-  InputParameters params = DelPhiComponent::validParams();
+  InputParameters params = OneDComponent::validParams();
 
   params.addRequiredParam<std::vector<Real>>("position", "Origin (start) of the component");
   params.addRequiredParam<std::vector<Real>>("orientation", "Orientation vector of the component");
@@ -17,7 +17,7 @@ TestComponent::validParams()
 }
 
 TestComponent::TestComponent(const InputParameters & parameters)
-  : DelPhiComponent(parameters),
+  : OneDComponent(parameters),
     _length(getParam<Real>("length")),
     _n_elem(getParam<unsigned>("n_elems")),
     _dL(_length / _n_elem)
