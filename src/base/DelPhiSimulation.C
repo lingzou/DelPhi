@@ -32,7 +32,10 @@ DelPhiSimulation::addComponent(const std::string & type,
   params.set<DelPhiSimulation *>("_sim") = this;
 
   MooseSharedPointer<DelPhiComponent> comp = _factory.create<DelPhiComponent>(type, name, params);
-  _components.push_back(comp);
+  if (_comp_by_name.find(name) == _comp_by_name.end())
+    _comp_by_name[name] = comp;
+  else
+    mooseError("Component with name '", name, "' already exists.");
 
   // also put them in different 'buckets' as certain actions need to be performed in order of types of components
   if (dynamic_cast<OneDComponent*>(comp.get()) != NULL)
@@ -43,6 +46,18 @@ DelPhiSimulation::addComponent(const std::string & type,
     mooseError("Can only add OneDComponent and ZeroDComponent.");
 }
 
+DelPhiComponent *
+DelPhiSimulation::getComponentByName(const std::string & name)
+{
+  if (_comp_by_name.find(name) == _comp_by_name.end())
+  {
+    mooseError("Component with name '" + name + "' does not exist in the system.");
+    return NULL;
+  }
+  else
+    return (_comp_by_name.find(name))->second.get();
+}
+
 void
 DelPhiSimulation::initSimulation()
 {
@@ -51,8 +66,8 @@ DelPhiSimulation::initSimulation()
 void
 DelPhiSimulation::buildMesh()
 {
-  for (auto & comp : _components)
-    comp->buildMesh();
+  for (auto & it : _comp_by_name)
+    it.second->buildMesh();
 
   _delphi_mesh.getMesh().set_spatial_dimension(3);
   _delphi_mesh.prepare(true);
@@ -61,7 +76,7 @@ DelPhiSimulation::buildMesh()
 void
 DelPhiSimulation::addExternalVariables()
 {
-  // Let each component add their variables info
+  // Let each component add their variables info, there is an order here
   for (auto & comp_1d : _components_1d)
   {
     comp_1d->setDOFoffset(_n_DOFs);
@@ -75,8 +90,9 @@ DelPhiSimulation::addExternalVariables()
     _n_DOFs += comp_0d->getNDOF();
   }
 
-  for (auto & comp : _components)
-    comp->setExtendedNeighbors();
+  // Now the system is ready for preparing extended connections
+  for (auto & it : _comp_by_name)
+    it.second->setExtendedNeighbors();
 
   _p_PETScApp->n_dofs = _n_DOFs;
   _p_PETScApp->setupPETScWorkSpace();
@@ -139,40 +155,40 @@ DelPhiSimulation::addMooseAuxVar(const std::string & name,
 void
 DelPhiSimulation::setupPETScIC(double * u)
 {
-  for (auto & comp : _components)
+  for (auto & it : _comp_by_name)
   {
-    unsigned offset = comp->getDOFoffset();
-    comp->setupIC(u + offset);
+    unsigned offset = it.second->getDOFoffset();
+    it.second->setupIC(u + offset);
   }
 }
 
 void
 DelPhiSimulation::updateSolutions(double * u)
 {
-  for (auto & comp : _components)
+  for (auto & it : _comp_by_name)
   {
-    unsigned offset = comp->getDOFoffset();
-    comp->updateSolution(u + offset);
+    unsigned offset = it.second->getDOFoffset();
+    it.second->updateSolution(u + offset);
   }
 }
 
 void
 DelPhiSimulation::computeTranRes(double * r)
 {
-  for (auto & comp : _components)
+  for (auto & it : _comp_by_name)
   {
-    unsigned offset = comp->getDOFoffset();
-    comp->computeTranRes(r + offset);
+    unsigned offset = it.second->getDOFoffset();
+    it.second->computeTranRes(r + offset);
   }
 }
 
 void
 DelPhiSimulation::computeSpatialRes(double * r)
 {
-  for (auto & comp : _components)
+  for (auto & it : _comp_by_name)
   {
-    unsigned offset = comp->getDOFoffset();
-    comp->computeSpatialRes(r + offset);
+    unsigned offset = it.second->getDOFoffset();
+    it.second->computeSpatialRes(r + offset);
   }
 }
 
@@ -185,15 +201,15 @@ DelPhiSimulation::externalSolve()
 void
 DelPhiSimulation::onTimestepBegin()
 {
-  for (auto & comp : _components)
-    comp->onTimestepBegin();
+  for (auto & it : _comp_by_name)
+    it.second->onTimestepBegin();
 }
 
 void
 DelPhiSimulation::onTimestepEnd()
 {
-  for (auto & comp : _components)
-    comp->onTimestepEnd();
+  for (auto & it : _comp_by_name)
+    it.second->onTimestepEnd();
 }
 
 void
@@ -217,8 +233,8 @@ DelPhiSimulation::FillJacobianMatrixNonZeroEntry(Mat & P_Mat)
 {
   MatrixNonZeroPattern * mnzp = new MatrixNonZeroPattern(_n_DOFs);
 
-  for (auto & comp : _components)
-    comp->FillJacobianMatrixNonZeroEntry(mnzp);
+  for (auto & it : _comp_by_name)
+    it.second->FillJacobianMatrixNonZeroEntry(mnzp);
 
   std::vector<std::set<unsigned int>> & nzp = mnzp->getNonZeroPattern();
   PetscInt * nnz;

@@ -20,6 +20,12 @@ public:
 
   virtual void FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp) override;
 
+  // don't worry, TestComponent will be inherited from a different type of base component
+  // for now, let's keep this functions
+  virtual std::vector<CellBase*> & getCells() override { mooseError("Error"); }
+  virtual std::vector<EdgeBase*> & getEdges() override { mooseError("Error"); }
+  virtual void setBoundaryEdge(DELPHI::EEndType /*end*/, EdgeBase* /*edge*/) override { mooseError("Error"); }
+
 protected:
   Real _length;
   unsigned _n_elem;

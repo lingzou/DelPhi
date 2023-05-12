@@ -24,6 +24,12 @@ public:
 
   virtual void FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp) override;
 
+  // data access
+  virtual std::vector<CellBase*> & getCells() override { return _cells; }
+  virtual std::vector<EdgeBase*> & getEdges() override { return _edges; }
+
+  virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) override;
+
 protected:
   Real _length;
   unsigned _n_elem;

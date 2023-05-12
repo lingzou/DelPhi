@@ -5,6 +5,14 @@
 []
 
 [Components]
+  [inlet]
+    type = TDJ
+    input = 'pipe(in)'
+    v_bc = 1.0
+    T_bc = 300.0
+    eos = eos
+  []
+
   [pipe]
     type = TestOneDFlow
     position = '0 0 0'

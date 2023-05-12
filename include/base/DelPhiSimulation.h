@@ -36,7 +36,8 @@ public:
 
   virtual void
   addComponent(const std::string & type, const std::string & name, InputParameters & params);
-  DelPhiMesh & phoenix_mesh() { return _delphi_mesh; }
+  virtual DelPhiComponent * getComponentByName(const std::string & name);
+  virtual DelPhiMesh & phoenix_mesh() { return _delphi_mesh; }
 
   // Helper API functions
   void addMooseAuxVar(const std::string & name,
@@ -59,8 +60,8 @@ protected:
 protected:
   DelPhiMesh & _delphi_mesh;
 
-  /// List of components in this simulation
-  std::vector<MooseSharedPointer<DelPhiComponent>> _components;
+  /// Map of components by their names, [name, comp_ptr]
+  std::map<std::string, MooseSharedPointer<DelPhiComponent>> _comp_by_name;
   /// components in different 'buckets'
   std::vector<OneDComponent*> _components_1d;
   std::vector<ZeroDComponent*> _components_0d;

@@ -88,19 +88,10 @@ TestOneDFlow::addExternalVariables()
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
     pars.set<Real>("dL") = _dL;
     _cells[i] = new CellBase(pars);
+    _cells[i]->setDOF(_DOF_offset + 3 * i + 1, _DOF_offset + 3 * i + 2);
   }
 
   _edges.resize(_n_elem + 1, NULL);
-  { // inlet vEdge
-    InputParameters pars = emptyInputParameters();
-    pars.set<std::string>("name") = name() + ":inlet_vEdge";
-    pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
-    pars.set<CellBase *>("west_cell") = NULL;
-    pars.set<CellBase *>("east_cell") = _cells[0];
-    pars.set<Real>("v_bc") = 1.0;
-    pars.set<Real>("T_bc") = 300.0;
-    _edges[0] = new vBCEdge(pars);
-  }
   for (unsigned i = 1; i < _n_elem; i++) // int edge only, bc edges will be handled later
   {
     InputParameters pars = emptyInputParameters();
@@ -109,6 +100,7 @@ TestOneDFlow::addExternalVariables()
     pars.set<CellBase *>("west_cell") = _cells[i-1];
     pars.set<CellBase *>("east_cell") = _cells[i];
     _edges[i] = new IntEdge(pars);
+    _edges[i]->setDOF(_DOF_offset + 3 * i);
   }
   { // outlet pEdge
     InputParameters pars = emptyInputParameters();
@@ -119,18 +111,26 @@ TestOneDFlow::addExternalVariables()
     pars.set<Real>("p_bc") = 1.0e5;
     pars.set<Real>("T_bc") = 300.0;
     _edges[_n_elem] = new pBCEdge(pars);
+    _edges[_n_elem]->setDOF(_DOF_offset + 3 * _n_elem);
   }
-
-  for (unsigned i = 0; i < _edges.size(); i++)
-    _edges[i]->setDOF(_DOF_offset + 3 * i);
-  for (unsigned i = 0; i < _cells.size(); i++)
-    _cells[i]->setDOF(_DOF_offset + 3 * i + 1, _DOF_offset + 3 * i + 2);
 
   _sim.addMooseAuxVar("p", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("T", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("rho", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("enthalpy", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("v", FEType(FIRST, LAGRANGE), {_subdomain_name});
+}
+
+void
+TestOneDFlow::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
+{
+  if (end == DELPHI::IN)
+  {
+    _edges.front() = edge;
+    (_edges.front())->setDOF(0);
+  }
+  else
+    mooseError("error");
 }
 
 void

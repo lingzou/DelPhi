@@ -3,6 +3,8 @@
 #include "MooseObject.h"
 #include "DelPhiSimulation.h"
 #include "DelPhiMesh.h"
+#include "DelPhiTypes.h"
+#include "OneDFlowModel.h"
 
 class DelPhiComponent : public MooseObject
 {
@@ -10,7 +12,9 @@ public:
   DelPhiComponent(const InputParameters & parameters);
   virtual ~DelPhiComponent() {}
 
-  virtual void buildMesh() = 0;
+  virtual void buildMesh()
+  { /*not all components have mesh*/
+  }
   virtual void addExternalVariables()
   { /*not all components have variables*/
   }
@@ -68,6 +72,11 @@ class OneDComponent : public DelPhiComponent
 public:
   OneDComponent(const InputParameters & parameters) : DelPhiComponent(parameters) {}
   virtual ~OneDComponent() {}
+
+  // data access
+  virtual std::vector<CellBase*> & getCells() = 0;
+  virtual std::vector<EdgeBase*> & getEdges() = 0;
+  virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) = 0;
 
 public:
   static InputParameters validParams();
