@@ -135,13 +135,13 @@ public:
   vBCEdge(const InputParameters & parameters);
   virtual ~vBCEdge() {}
 
-  virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rho(); }
-  virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) * _eos->h_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rhoh(); }
+  //virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rho(); }
+  //virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) * _eos->h_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rhoh(); }
   virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
-  virtual Real dv_dx() override;
-  virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
+  //virtual Real dv_dx() override;
+  //virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
 
-  virtual Real rho_edge() final { return _e_cell->rho(); }
+  //virtual Real rho_edge() final { return _e_cell->rho(); }
 
   virtual void updateGhostPressure(Real p_ghost) { _p_ghost = p_ghost; }
   virtual Real computeDirichletBCResidual() { return _v - _v_bc; }
@@ -151,20 +151,75 @@ protected:
   Real _p_ghost;
 };
 
+class vBCEdgeInlet : public vBCEdge
+{
+public:
+  vBCEdgeInlet(const InputParameters & parameters);
+  virtual ~vBCEdgeInlet() {}
+
+  virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rho(); }
+  virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rhoh(); }
+  //virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
+  virtual Real dv_dx() override { return (_v_bc > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
+  virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
+
+  virtual Real rho_edge() final { return _e_cell->rho(); }
+};
+
+class vBCEdgeOutlet : public vBCEdge
+{
+public:
+  vBCEdgeOutlet(const InputParameters & parameters);
+  virtual ~vBCEdgeOutlet() {}
+
+  virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rho() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc); }
+  virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rhoh() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc); }
+  //virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
+  virtual Real dv_dx() override { return (_v_bc > 0.0) ? (_v_bc - _w_edge->v() / _w_cell->dL()) : 0.0; }
+  virtual Real dp_dx() override { return (_p_ghost - _w_cell->p()) / _dL_edge; }
+
+  virtual Real rho_edge() final { return _w_cell->rho(); }
+};
+
+
+
+
 class pBCEdge : public EdgeBase
 {
 public:
   pBCEdge(const InputParameters & parameters);
   virtual ~pBCEdge() {}
 
-  virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _eos->rho_from_p_T(_p_bc, _T_bc); }
-  virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _eos->rho_from_p_T(_p_bc, _T_bc) * _eos->h_from_p_T(_p_bc, _T_bc); }
-  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
-  virtual Real dv_dx() override;
-  virtual Real dp_dx() override { return (_p_bc - _w_cell->p()) / _dL_edge; }
-
-  virtual Real rho_edge() override final { return _w_cell->rho(); }
+  virtual Real dv_dt(Real dt) override final { return (_v - _v_o) / dt; }
 
 protected:
   Real _p_bc, _T_bc;
+};
+
+class pBCEdgeInlet : public pBCEdge
+{
+public:
+  pBCEdgeInlet(const InputParameters & parameters);
+  virtual ~pBCEdgeInlet() {}
+
+  virtual Real mass_flux() override { return (_v > 0.0) ? _v * _eos->rho_from_p_T(_p_bc, _T_bc) : _v * _e_cell->rho(); }
+  virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _eos->rho_from_p_T(_p_bc, _T_bc) * _eos->h_from_p_T(_p_bc, _T_bc) : _v * _e_cell->rhoh(); }
+  virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
+  virtual Real dp_dx() override { return (_e_cell->p() - _p_bc) / _dL_edge; }
+
+  virtual Real rho_edge() override final { return _e_cell->rho(); }
+};
+
+class pBCEdgeOutlet : public pBCEdge
+{
+public:
+  pBCEdgeOutlet(const InputParameters & parameters);
+  virtual ~pBCEdgeOutlet() {}
+
+  virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _eos->rho_from_p_T(_p_bc, _T_bc); }
+  virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _eos->rho_from_p_T(_p_bc, _T_bc) * _eos->h_from_p_T(_p_bc, _T_bc); }
+  virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
+  virtual Real dp_dx() override { return (_p_bc - _w_cell->p()) / _dL_edge; }
+
+  virtual Real rho_edge() override final { return _w_cell->rho(); }
 };

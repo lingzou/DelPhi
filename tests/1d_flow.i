@@ -21,6 +21,14 @@
     length = 0.5
     eos = eos
   []
+
+  [outlet]
+    type = TDV
+    input = 'pipe(out)'
+    p_bc = 1.0e5
+    T_bc = 300.0
+    eos = eos
+  []
 []
 
 [Executioner]

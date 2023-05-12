@@ -1,13 +1,13 @@
-#include "TDJ.h"
+#include "TDV.h"
 
-registerMooseObject("delphiApp", TDJ);
+registerMooseObject("delphiApp", TDV);
 
 InputParameters
-TDJ::validParams()
+TDV::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
-  params.addRequiredParam<Real>("v_bc", "Velocity boundary value");
+  params.addRequiredParam<Real>("p_bc", "Pressure boundary value");
   params.addRequiredParam<Real>("T_bc", "Temperature boundary value");
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
   params.addRequiredParam<std::vector<std::string>>("input", "Names of the connected components");
@@ -15,16 +15,16 @@ TDJ::validParams()
   return params;
 }
 
-TDJ::TDJ(const InputParameters & parameters)
+TDV::TDV(const InputParameters & parameters)
   : ZeroDComponent(parameters),
   _input(getParam<std::vector<std::string>>("input"))
 {
   if (_input.size() != 1)
-    mooseError("TDJ is expecting one connected component.");
+    mooseError("TDV is expecting one connected component.");
 }
 
 void
-TDJ::addExternalVariables()
+TDV::addExternalVariables()
 {
   // handle eos first
   const UserObjectName & uo_name = getParam<UserObjectName>("eos");
@@ -44,20 +44,20 @@ TDJ::addExternalVariables()
 
   bool inlet = (end_type == DELPHI::IN);
 
-  // boundary vEdge
+  // boundary pEdge
   InputParameters pars = emptyInputParameters();
-  pars.set<std::string>("name") = name() + ":vEdge";
+  pars.set<std::string>("name") = name() + ":pEdge";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   pars.set<CellBase *>("west_cell") = inlet ? NULL : (comp_1d->getCells()).back();
   pars.set<CellBase *>("east_cell") = inlet ? (comp_1d->getCells()).front():  NULL;
-  pars.set<Real>("v_bc") = getParam<Real>("v_bc");
+  pars.set<Real>("p_bc") = getParam<Real>("p_bc");
   pars.set<Real>("T_bc") = getParam<Real>("T_bc");
 
   EdgeBase * edge = NULL;
   if (inlet)
-    edge = new vBCEdgeInlet(pars);
+    edge = new pBCEdgeInlet(pars);
   else
-    edge = new vBCEdgeOutlet(pars);
+    edge = new pBCEdgeOutlet(pars);
 
-  comp_1d->setBoundaryEdge(DELPHI::IN, edge);
+  comp_1d->setBoundaryEdge(DELPHI::OUT, edge);
 }

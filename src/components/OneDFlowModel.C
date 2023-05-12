@@ -155,14 +155,31 @@ vBCEdge::vBCEdge(const InputParameters & parameters) :
 {
 }
 
-Real
-vBCEdge::dv_dx()
+vBCEdgeInlet::vBCEdgeInlet(const InputParameters & parameters) :
+  vBCEdge(parameters)
 {
-  if (_v > 0.0)
-    return 0.0;
-  else
-    return (_e_edge->v() - _v) / _e_cell->dL();
+  // expect no w_cell but e_cell
+  if (_w_cell) mooseError("Not expecting west_cell in pBCEdgeInlet");
+  if (!_e_cell) mooseError("Expecting east_cell in pBCEdgeInlet");
 }
+
+vBCEdgeOutlet::vBCEdgeOutlet(const InputParameters & parameters) :
+  vBCEdge(parameters)
+{
+  // expect no e_cell but w_cell
+  if (!_w_cell) mooseError("Expecting west_cell in pBCEdgeOutlet");
+  if (_e_cell) mooseError("Not expecting east_cell in pBCEdgeOutlet");
+}
+
+
+// Real
+// vBCEdge::dv_dx()
+// {
+//   if (_v > 0.0)
+//     return 0.0;
+//   else
+//     return (_e_edge->v() - _v) / _e_cell->dL();
+// }
 
 pBCEdge::pBCEdge(const InputParameters & parameters) :
   EdgeBase(parameters),
@@ -171,11 +188,18 @@ pBCEdge::pBCEdge(const InputParameters & parameters) :
 {
 }
 
-Real
-pBCEdge::dv_dx()
+pBCEdgeInlet::pBCEdgeInlet(const InputParameters & parameters) :
+  pBCEdge(parameters)
 {
-  if (_v > 0.0)
-    return (_v - _w_edge->v()) / _w_cell->dL();
-  else
-    return 0.0;
+  // expect no w_cell but e_cell
+  if (_w_cell) mooseError("Not expecting west_cell in pBCEdgeInlet");
+  if (!_e_cell) mooseError("Expecting east_cell in pBCEdgeInlet");
+}
+
+pBCEdgeOutlet::pBCEdgeOutlet(const InputParameters & parameters) :
+  pBCEdge(parameters)
+{
+  // expect no e_cell but w_cell
+  if (!_w_cell) mooseError("Expecting west_cell in pBCEdgeOutlet");
+  if (_e_cell) mooseError("Not expecting east_cell in pBCEdgeOutlet");
 }

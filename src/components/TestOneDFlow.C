@@ -102,17 +102,17 @@ TestOneDFlow::addExternalVariables()
     _edges[i] = new IntEdge(pars);
     _edges[i]->setDOF(_DOF_offset + 3 * i);
   }
-  { // outlet pEdge
-    InputParameters pars = emptyInputParameters();
-    pars.set<std::string>("name") = name() + ":outlet_pEdge";
-    pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
-    pars.set<CellBase *>("west_cell") = _cells[_n_elem-1];
-    pars.set<CellBase *>("east_cell") = NULL;
-    pars.set<Real>("p_bc") = 1.0e5;
-    pars.set<Real>("T_bc") = 300.0;
-    _edges[_n_elem] = new pBCEdge(pars);
-    _edges[_n_elem]->setDOF(_DOF_offset + 3 * _n_elem);
-  }
+  // { // outlet pEdge
+  //   InputParameters pars = emptyInputParameters();
+  //   pars.set<std::string>("name") = name() + ":outlet_pEdge";
+  //   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
+  //   pars.set<CellBase *>("west_cell") = _cells[_n_elem-1];
+  //   pars.set<CellBase *>("east_cell") = NULL;
+  //   pars.set<Real>("p_bc") = 1.0e5;
+  //   pars.set<Real>("T_bc") = 300.0;
+  //   _edges[_n_elem] = new pBCEdge(pars);
+  //   _edges[_n_elem]->setDOF(_DOF_offset + 3 * _n_elem);
+  // }
 
   _sim.addMooseAuxVar("p", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("T", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
@@ -128,6 +128,11 @@ TestOneDFlow::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
   {
     _edges.front() = edge;
     (_edges.front())->setDOF(0);
+  }
+  else if (end == DELPHI::OUT)
+  {
+    _edges.back() = edge;
+    (_edges.back())->setDOF(_DOF_offset + 3 * _n_elem);
   }
   else
     mooseError("error");
