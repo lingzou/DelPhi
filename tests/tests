@@ -4,16 +4,16 @@
     input = 'heatconduction-2pcs.i'
     exodiff = 'heatconduction-2pcs_out.e'
   []
-  [1d_flow_flibe]
+  [tdj_tdv_positive_v_flibe]
     type = 'Exodiff'
-    input = '1d_flow.i'
-    cli_args = 'FluidProperties/eos/type=FlibeFluidProperties Outputs/file_base=1d_flow_flibe'
-    exodiff = '1d_flow_flibe.e'
+    input = 'tdj_tdv_positive_v.i'
+    cli_args = 'FluidProperties/eos/type=FlibeFluidProperties Outputs/file_base=tdj_tdv_positive_v_flibe'
+    exodiff = 'tdj_tdv_positive_v_flibe.e'
   []
-  [1d_flow_helium]
+  [tdj_tdv_positive_v_helium]
     type = 'Exodiff'
-    input = '1d_flow.i'
-    cli_args = 'FluidProperties/eos/type=HeliumFluidProperties Outputs/file_base=1d_flow_helium'
-    exodiff = '1d_flow_helium.e'
+    input = 'tdj_tdv_positive_v.i'
+    cli_args = 'FluidProperties/eos/type=HeliumFluidProperties Outputs/file_base=tdj_tdv_positive_v_helium'
+    exodiff = 'tdj_tdv_positive_v_helium.e'
   []
 []
