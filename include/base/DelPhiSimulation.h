@@ -69,6 +69,9 @@ protected:
   /// Variables for output purpose <var_name, sub_domain_set>
   std::map<std::string, VariableInfo> _vars;
 
+  /// text-based output
+  FILE * _p_file;
+
 public:
   static InputParameters validParams();
 };

@@ -16,10 +16,16 @@ DelPhiSimulation::DelPhiSimulation(const InputParameters & params)
   : ExternalProblem(params), _n_DOFs(0), _delphi_mesh(dynamic_cast<DelPhiMesh &>(_mesh))
 {
   _p_PETScApp = new PETScApp(this);
+
+  std::string fullname = getMooseApp().parser().getPrimaryFileName(false);
+  size_t pos = fullname.find_last_of('.');
+  fullname = fullname.substr(0, pos) + "_out.txt";
+  _p_file = fopen(fullname.c_str(), "w");
 }
 
 DelPhiSimulation::~DelPhiSimulation()
 {
+  fclose(_p_file);
   _p_PETScApp->freePETScWorkSpace();
   delete _p_PETScApp;
 }
