@@ -59,5 +59,5 @@ TDV::addExternalVariables()
   else
     edge = new pBCEdgeOutlet(pars);
 
-  comp_1d->setBoundaryEdge(DELPHI::OUT, edge);
+  comp_1d->setBoundaryEdge(end_type, edge);
 }

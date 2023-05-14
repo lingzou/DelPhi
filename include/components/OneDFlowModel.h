@@ -81,6 +81,8 @@ public:
   virtual Real dv_dt(Real dt) = 0;
   virtual Real dv_dx() = 0;
   virtual Real dp_dx() = 0;
+  // only for output purpose
+  virtual Real T_edge() = 0;
 
   virtual void setDOF(unsigned vDOF) final { _vDOF = vDOF; }
   virtual unsigned vDOF() const final { return _vDOF; }
@@ -119,6 +121,7 @@ public:
   //IntEdge(CellBase * w_cell, CellBase * e_cell) : _w_cell(w_cell), _e_cell(e_cell)
   virtual ~IntEdge() {}
 
+  virtual Real T_edge() override { return (_v > 0.0) ? _w_cell->T() : _e_cell->T(); }
   virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _e_cell->rho(); }
   virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _e_cell->rhoh(); }
   virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
@@ -135,13 +138,7 @@ public:
   vBCEdge(const InputParameters & parameters);
   virtual ~vBCEdge() {}
 
-  //virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rho(); }
-  //virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_e_cell->p(), _T_bc) * _eos->h_from_p_T(_e_cell->p(), _T_bc) : _v_bc * _e_cell->rhoh(); }
   virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
-  //virtual Real dv_dx() override;
-  //virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
-
-  //virtual Real rho_edge() final { return _e_cell->rho(); }
 
   virtual void updateGhostPressure(Real p_ghost) { _p_ghost = p_ghost; }
   virtual Real computeDirichletBCResidual() { return _v - _v_bc; }
@@ -157,9 +154,10 @@ public:
   vBCEdgeInlet(const InputParameters & parameters);
   virtual ~vBCEdgeInlet() {}
 
+  virtual Real T_edge() override { return (_v_bc > 0.0) ? _T_bc : _e_cell->T(); }
   virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rho(); }
   virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rhoh(); }
-  //virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
+
   virtual Real dv_dx() override { return (_v_bc > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
   virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
 
@@ -172,6 +170,7 @@ public:
   vBCEdgeOutlet(const InputParameters & parameters);
   virtual ~vBCEdgeOutlet() {}
 
+  virtual Real T_edge() override { return (_v_bc > 0.0) ? _w_cell->T() : _T_bc; }
   virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rho() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc); }
   virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rhoh() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc); }
   //virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
@@ -202,6 +201,7 @@ public:
   pBCEdgeInlet(const InputParameters & parameters);
   virtual ~pBCEdgeInlet() {}
 
+  virtual Real T_edge() override { return (_v > 0.0) ? _T_bc : _e_cell->T(); }
   virtual Real mass_flux() override { return (_v > 0.0) ? _v * _eos->rho_from_p_T(_p_bc, _T_bc) : _v * _e_cell->rho(); }
   virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _eos->rho_from_p_T(_p_bc, _T_bc) * _eos->h_from_p_T(_p_bc, _T_bc) : _v * _e_cell->rhoh(); }
   virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
@@ -216,6 +216,7 @@ public:
   pBCEdgeOutlet(const InputParameters & parameters);
   virtual ~pBCEdgeOutlet() {}
 
+  virtual Real T_edge() override { return (_v > 0.0) ? _w_cell->T() : _T_bc; }
   virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _eos->rho_from_p_T(_p_bc, _T_bc); }
   virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _eos->rho_from_p_T(_p_bc, _T_bc) * _eos->h_from_p_T(_p_bc, _T_bc); }
   virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }

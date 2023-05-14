@@ -40,9 +40,11 @@ public:
   virtual DelPhiMesh & phoenix_mesh() { return _delphi_mesh; }
 
   // Helper API functions
-  void addMooseAuxVar(const std::string & name,
-                      const FEType & type,
-                      const std::vector<SubdomainName> & subdomain_names);
+  virtual void addMooseAuxVar(const std::string & name,
+                              const FEType & type,
+                              const std::vector<SubdomainName> & subdomain_names);
+  // will work on MOOSE-stype output file later
+  virtual FILE * getTextOutputFile() { return _p_file; }
 
 protected:
   // PETSc interface

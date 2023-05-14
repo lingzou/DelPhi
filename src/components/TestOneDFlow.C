@@ -127,7 +127,7 @@ TestOneDFlow::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
   if (end == DELPHI::IN)
   {
     _edges.front() = edge;
-    (_edges.front())->setDOF(0);
+    (_edges.front())->setDOF(_DOF_offset);
   }
   else if (end == DELPHI::OUT)
   {
@@ -259,7 +259,11 @@ TestOneDFlow::onTimestepEnd()
   // save old solutions
   for(auto& cell : _cells)  cell->saveOldSlns();
   for(auto& edge : _edges)  edge->saveOldSlns();
+}
 
+void
+TestOneDFlow::writeEXODUSOutput()
+{
   // output (element/cell value)
   MooseVariableFieldBase & T_var = _sim.getVariable(0, "T");
   NumericVector<Number> & T_sln = T_var.sys().solution();
@@ -292,6 +296,22 @@ TestOneDFlow::onTimestepEnd()
     dof_id_type dof = _nodes[i]->dof_number(v_var.sys().number(), v_var.number(), 0);
     v_sln.set(dof, _edges[i]->v());
   }
+}
+
+void
+TestOneDFlow::writeTextOutput()
+{
+  FILE * file = _sim.getTextOutputFile();
+
+  fprintf(file, "Component = %s\n", name().c_str());
+  fprintf(file, "%20s%20s%20s%20s%20s%20s\n", "Cell", "x", "p", "T", "rho", "h");
+  for (unsigned i = 0; i < _cells.size(); i++)
+    fprintf(file, "%20s%20.6e%20.6e%20.6e%20.6e%20.6e\n", _cells[i]->name().c_str(), _dL * (i + 0.5), _cells[i]->p(), _cells[i]->T(), _cells[i]->rho(), _cells[i]->h());
+
+  fprintf(file, "\n%20s%20s%20s%20s%20s%20s\n", "Edge", "x", "v", "T", "mass_flux", "enthalpy_flux");
+  for (unsigned i = 0; i < _edges.size(); i++)
+    fprintf(file, "%20s%20.6e%20.6e%20.6e%20.6e%20.6e\n", _edges[i]->name().c_str(), _dL * i, _edges[i]->v(), _edges[i]->T_edge(), _edges[i]->mass_flux(), _edges[i]->enthalpy_flux());
+  fprintf(file, "\n");
 }
 
 void

@@ -30,6 +30,10 @@ public:
 
   virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) override;
 
+  // output
+  virtual void writeEXODUSOutput() override;
+  virtual void writeTextOutput() override;
+
 protected:
   Real _length;
   unsigned _n_elem;

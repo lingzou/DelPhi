@@ -59,5 +59,5 @@ TDJ::addExternalVariables()
   else
     edge = new vBCEdgeOutlet(pars);
 
-  comp_1d->setBoundaryEdge(DELPHI::IN, edge);
+  comp_1d->setBoundaryEdge(end_type, edge);
 }

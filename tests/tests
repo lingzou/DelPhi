@@ -16,4 +16,19 @@
     cli_args = 'FluidProperties/eos/type=HeliumFluidProperties Outputs/file_base=tdj_tdv_positive_v_helium'
     exodiff = 'tdj_tdv_positive_v_helium.e'
   []
+  [tdj_tdv_negative_v]
+    type = 'Exodiff'
+    input = 'tdj_tdv_negative_v.i'
+    exodiff = 'tdj_tdv_negative_v_out.e'
+  []
+  [tdv_tdj_positive_v]
+    type = 'Exodiff'
+    input = 'tdv_tdj_positive_v.i'
+    exodiff = 'tdv_tdj_positive_v_out.e'
+  []
+  [two_fluids]
+    type = 'Exodiff'
+    input = 'two_fluids.i'
+    exodiff = 'two_fluids_out.e'
+  []
 []
