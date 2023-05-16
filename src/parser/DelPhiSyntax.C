@@ -23,8 +23,9 @@ associateSyntax(Syntax & syntax, ActionFactory & /*action_factory*/)
   {
     syntax.addDependency("prepare_mesh", "create_delphi_simulation");
     syntax.addDependency("setup_mesh", "create_delphi_simulation");
-    syntax.addDependency("init_delphi_simulation", "add_delphi_component");
-    syntax.addDependency("build_mesh", "init_delphi_simulation");
+    //syntax.addDependency("init_delphi_simulation", "add_delphi_component");
+    syntax.addDependency("build_mesh", "add_delphi_component");
+    //syntax.addDependency("init_delphi_simulation", "setup_executioner");
     syntax.addDependency("init_mesh", "build_mesh");
     syntax.addDependency("add_delphi_variables", "init_mesh");
     syntax.addDependency("add_delphi_variables", "add_user_object");

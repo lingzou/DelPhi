@@ -25,6 +25,9 @@
     n_elems = 10
     length = 0.5
     eos = helium
+    initial_P = 1e5
+    initial_V = 0.5
+    initial_T = 300
   []
 
   [outlet-1]
@@ -50,6 +53,9 @@
     n_elems = 10
     length = 0.6
     eos = flibe
+    initial_P = 1e5
+    initial_V = 0.5
+    initial_T = 300
   []
 
   [outlet-2]

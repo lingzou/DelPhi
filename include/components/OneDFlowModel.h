@@ -132,6 +132,16 @@ public:
   virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
 };
 
+// snjEdge is a type of IntEdge for connecting the ends of two pipes
+// not like IntEdge is inside a single pipe
+// it will need special treatment such as area change, irregular connection such as inlet-inlet situations
+class snjEdge : public IntEdge
+{
+public:
+  snjEdge(const InputParameters & parameters) : IntEdge(parameters) {}
+  virtual ~snjEdge() {}
+};
+
 class vBCEdge : public EdgeBase
 {
 public:
@@ -181,6 +191,37 @@ public:
 };
 
 
+
+class snjShadowEdge : public vBCEdge
+{
+public:
+  snjShadowEdge(const InputParameters & parameters) : vBCEdge(parameters),
+  _real_edge(_pars.get<snjEdge*>("real_edge"))
+  {}
+  virtual ~snjShadowEdge() {}
+
+  virtual Real T_edge() override { return _real_edge->T_edge(); }
+  virtual Real mass_flux() override { return _real_edge->mass_flux(); }
+  virtual Real enthalpy_flux() override { return _real_edge->enthalpy_flux(); }
+  virtual Real dv_dx() override { return _real_edge->dv_dx(); };
+  virtual Real dp_dx() override { return _real_edge->dp_dx(); }
+  virtual Real rho_edge() final { return _real_edge->rho_edge(); }
+
+  virtual void updateGhostPressure(Real /*p_ghost*/) override { /* nothing to do */ }
+
+  // Key implementation: show edge has the same velocity as the real edge
+  virtual Real computeDirichletBCResidual() override { return _v - _real_edge->v(); }
+
+  virtual void setExtendedNeighborEdges() override
+  {
+    // shadow edge has no connected cells but follow the real edge
+    _connected_DOFs.insert(_vDOF);
+    _connected_DOFs.insert(_real_edge->vDOF());
+  }
+
+protected:
+  snjEdge * _real_edge;
+};
 
 
 class pBCEdge : public EdgeBase

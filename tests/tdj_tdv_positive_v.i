@@ -20,6 +20,9 @@
     n_elems = 20
     length = 0.5
     eos = eos
+    initial_P = 1e5
+    initial_V = 0.5
+    initial_T = 300
   []
 
   [outlet]

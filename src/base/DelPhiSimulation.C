@@ -82,6 +82,12 @@ DelPhiSimulation::buildMesh()
 void
 DelPhiSimulation::addExternalVariables()
 {
+  // FEProblemBase setup PETSc options in FEProblemBase::solve()
+  // From experiments, it seems to be too late to do so in ExternalProblem::solve()
+  // and this is the right place to setup PETSc options
+  // We may need find a better plance (function name) for this operation
+  Moose::PetscSupport::petscSetOptions(*this);
+
   // Let each component add their variables info, there is an order here
   for (auto & comp_1d : _components_1d)
   {

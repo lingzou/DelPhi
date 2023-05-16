@@ -31,4 +31,9 @@
     input = 'two_fluids.i'
     exodiff = 'two_fluids_out.e'
   []
+  [pipe_snj_pipe]
+    type = 'Exodiff'
+    input = 'pipe_snj_pipe.i'
+    exodiff = 'pipe_snj_pipe_out.e'
+  []
 []

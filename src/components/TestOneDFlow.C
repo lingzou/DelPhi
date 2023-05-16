@@ -16,6 +16,10 @@ TestOneDFlow::validParams()
   params.addRequiredParam<unsigned>("n_elems", "number of element in this OneDComp");
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
 
+  params.addRequiredParam<Real>("initial_P", "Initial value for pressure");
+  params.addRequiredParam<Real>("initial_V", "Initial value for velocity");
+  params.addRequiredParam<Real>("initial_T", "Initial value for temperature");
+
   return params;
 }
 
@@ -102,17 +106,6 @@ TestOneDFlow::addExternalVariables()
     _edges[i] = new IntEdge(pars);
     _edges[i]->setDOF(_DOF_offset + 3 * i);
   }
-  // { // outlet pEdge
-  //   InputParameters pars = emptyInputParameters();
-  //   pars.set<std::string>("name") = name() + ":outlet_pEdge";
-  //   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
-  //   pars.set<CellBase *>("west_cell") = _cells[_n_elem-1];
-  //   pars.set<CellBase *>("east_cell") = NULL;
-  //   pars.set<Real>("p_bc") = 1.0e5;
-  //   pars.set<Real>("T_bc") = 300.0;
-  //   _edges[_n_elem] = new pBCEdge(pars);
-  //   _edges[_n_elem]->setDOF(_DOF_offset + 3 * _n_elem);
-  // }
 
   _sim.addMooseAuxVar("p", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("T", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
@@ -149,9 +142,9 @@ void
 TestOneDFlow::setupIC(double * u)
 {
   // setup initial conditions
-  Real v_init = 0.5;
-  Real p_init = 1e5;
-  Real T_init = 300.0;
+  Real v_init = getParam<Real>("initial_V");
+  Real p_init = getParam<Real>("initial_P");
+  Real T_init = getParam<Real>("initial_T");
   unsigned idx = 0;
   for(unsigned i = 0; i < _n_elem + 1; i++)
   {
