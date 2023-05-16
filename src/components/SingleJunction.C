@@ -54,13 +54,27 @@ SingleJunction::addExternalVariables()
   if (comp_1d_out == NULL)
     mooseError(comp_name_out + "is not a OneDComponent.");
 
+  // let's make sure that SingleJunction is connecting the outlet (out) of one pipe and
+  //   the inlet (in) of the other pipe (order does not matter)
+  if (end_type_in == end_type_out)
+    mooseError("For SingleJunction, '" + name() + "', please connect it with the (out) of one pipe"
+                " and the (in) of the other pipe, e.g.,\n  inputs = 'pipe-1(out)'\n  outputs = 'pipe-2(in)'\n"
+                "The order does not matter, e.g.,\n  outputs = 'pipe-1(out)'\n  inputs = 'pipe-2(in)'\n");
+
   // snjEdge
   InputParameters pars = emptyInputParameters();
   pars.set<std::string>("name") = name() + ":snjEdge";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
-  // for now, assume pipe 1 out - snj - pipe 2 in
-  pars.set<CellBase *>("west_cell") = (comp_1d_in->getCells()).back();
-  pars.set<CellBase *>("east_cell") = (comp_1d_out->getCells()).front();
+  if (end_type_in == DELPHI::OUT) // pipe_in (out) <-> SNJ <-> pipe_out (in)
+  {
+    pars.set<CellBase *>("west_cell") = (comp_1d_in->getCells()).back();
+    pars.set<CellBase *>("east_cell") = (comp_1d_out->getCells()).front();
+  }
+  else // pipe_in (in) <-> SNJ <-> pipe_out (out)
+  {
+    pars.set<CellBase *>("west_cell") = (comp_1d_out->getCells()).back();
+    pars.set<CellBase *>("east_cell") = (comp_1d_in->getCells()).front();
+  }
 
   snjEdge * edge = new snjEdge(pars);
   comp_1d_in->setBoundaryEdge(end_type_in, edge);

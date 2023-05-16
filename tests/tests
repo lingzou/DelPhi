@@ -36,4 +36,9 @@
     input = 'pipe_snj_pipe.i'
     exodiff = 'pipe_snj_pipe_out.e'
   []
+  [pipe_snj_pipe_flip]
+    type = 'Exodiff'
+    input = 'pipe_snj_pipe_flip.i'
+    exodiff = 'pipe_snj_pipe_flip_out.e'
+  []
 []
