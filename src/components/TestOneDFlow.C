@@ -252,11 +252,7 @@ TestOneDFlow::onTimestepEnd()
   // save old solutions
   for(auto& cell : _cells)  cell->saveOldSlns();
   for(auto& edge : _edges)  edge->saveOldSlns();
-}
 
-void
-TestOneDFlow::writeEXODUSOutput()
-{
   // output (element/cell value)
   MooseVariableFieldBase & T_var = _sim.getVariable(0, "T");
   NumericVector<Number> & T_sln = T_var.sys().solution();

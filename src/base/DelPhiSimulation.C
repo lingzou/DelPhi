@@ -228,10 +228,7 @@ DelPhiSimulation::onTimestepEnd()
   fprintf(_p_file, "** Time = %20.6e\n", _time);
   fprintf(_p_file, "********************************************************************************\n");
   for (auto & it : _comp_by_name)
-  {
-    it.second->writeEXODUSOutput();
     it.second->writeTextOutput();
-  }
 }
 
 void

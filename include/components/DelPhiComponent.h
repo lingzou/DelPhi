@@ -49,7 +49,6 @@ public:
   { /*not all components have residuals thus Jacobian*/
   }
 
-  virtual void writeEXODUSOutput() {}
   virtual void writeTextOutput() {}
 
 protected:
