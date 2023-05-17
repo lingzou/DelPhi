@@ -76,7 +76,7 @@ public:
   virtual ~OneDComponent() {}
 
   // data access
-  virtual std::vector<CellBase*> & getCells() = 0;
+  virtual std::vector<OneDCell*> & getCells() = 0;
   virtual std::vector<EdgeBase*> & getEdges() = 0;
   virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) = 0;
 

@@ -91,7 +91,7 @@ TestOneDFlow::addExternalVariables()
     pars.set<std::string>("name") = name() + ":cell_" + std::to_string(i);
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
     pars.set<Real>("dL") = _dL;
-    _cells[i] = new CellBase(pars);
+    _cells[i] = new OneDCell(pars);
     _cells[i]->setDOF(_DOF_offset + 3 * i + 1, _DOF_offset + 3 * i + 2);
   }
 

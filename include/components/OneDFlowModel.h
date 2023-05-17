@@ -28,19 +28,14 @@ public:
   virtual unsigned pDOF() const final { return _pDOF; }
   virtual unsigned TDOF() const final { return _TDOF; }
 
-  virtual void initialize(Real p, Real T);
-  virtual void updateSolution(Real p, Real T);
-  virtual void saveOldSlns();
+  virtual void initialize(Real p, Real T) final;
+  virtual void updateSolution(Real p, Real T) final;
+  virtual void saveOldSlns() final;
 
-  virtual void setWestEdge(EdgeBase * w_edge) { _w_edge = w_edge; }
-  virtual void setEastEdge(EdgeBase * e_edge) { _e_edge = e_edge; }
-  virtual EdgeBase * wEdge() const { return _w_edge; }
-  virtual EdgeBase * eEdge() const { return _e_edge; }
-  virtual EdgeBase * getOtherSideEdge(EdgeBase * edge);
-  virtual void setExtendedNeighborCells();
-
-  virtual void addConnectedDOFs(unsigned dof) { _connected_DOFs.insert(dof); }
-  virtual std::set<unsigned> & getConnectedDOFs() { return _connected_DOFs; }
+  virtual EdgeBase * getOtherSideEdge(EdgeBase * edge) = 0;
+  virtual void setExtendedNeighborCells() = 0;
+  virtual void addConnectedDOFs(unsigned dof) final { _connected_DOFs.insert(dof); }
+  virtual std::set<unsigned> & getConnectedDOFs() final { return _connected_DOFs; }
 
 protected:
   const InputParameters & _pars;
@@ -56,12 +51,27 @@ protected:
 
   const SinglePhaseFluidProperties * _eos;
 
+  std::set<unsigned> _connected_DOFs;
+};
+
+class OneDCell : public CellBase
+{
+public:
+  OneDCell(const InputParameters & parameters);
+  virtual ~OneDCell() {}
+
+  virtual void setWestEdge(EdgeBase * w_edge) { _w_edge = w_edge; }
+  virtual void setEastEdge(EdgeBase * e_edge) { _e_edge = e_edge; }
+  virtual EdgeBase * wEdge() const { return _w_edge; }
+  virtual EdgeBase * eEdge() const { return _e_edge; }
+  virtual EdgeBase * getOtherSideEdge(EdgeBase * edge) override;
+  virtual void setExtendedNeighborCells() override;
+
+protected:
   EdgeBase * _w_edge;
   EdgeBase * _e_edge;
   CellBase * _w_cell;
   CellBase * _e_cell;
-
-  std::set<unsigned> _connected_DOFs;
 };
 
 class EdgeBase
@@ -118,7 +128,6 @@ class IntEdge : public EdgeBase
 {
 public:
   IntEdge(const InputParameters & parameters);
-  //IntEdge(CellBase * w_cell, CellBase * e_cell) : _w_cell(w_cell), _e_cell(e_cell)
   virtual ~IntEdge() {}
 
   virtual Real T_edge() override { return (_v > 0.0) ? _w_cell->T() : _e_cell->T(); }

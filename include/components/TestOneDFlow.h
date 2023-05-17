@@ -25,7 +25,7 @@ public:
   virtual void FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp) override;
 
   // data access
-  virtual std::vector<CellBase*> & getCells() override { return _cells; }
+  virtual std::vector<OneDCell*> & getCells() override { return _cells; }
   virtual std::vector<EdgeBase*> & getEdges() override { return _edges; }
 
   virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) override;
@@ -40,7 +40,7 @@ protected:
   const SinglePhaseFluidProperties * _eos;
   Real _rho_ref, _rhoh_ref;
 
-  std::vector<CellBase*> _cells;
+  std::vector<OneDCell*> _cells;
   std::vector<EdgeBase*> _edges;
 
   unsigned _subdomain_id;
