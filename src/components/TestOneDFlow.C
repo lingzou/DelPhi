@@ -295,11 +295,11 @@ TestOneDFlow::writeTextOutput()
   fprintf(file, "Component = %s\n", name().c_str());
   fprintf(file, "%20s%20s%20s%20s%20s%20s\n", "Cell", "x", "p", "T", "rho", "h");
   for (unsigned i = 0; i < _cells.size(); i++)
-    fprintf(file, "%20s%20.6e%20.6e%20.6e%20.6e%20.6e\n", _cells[i]->name().c_str(), _dL * (i + 0.5), _cells[i]->p(), _cells[i]->T(), _cells[i]->rho(), _cells[i]->h());
+    fprintf(file, "%20s%20.8e%20.8e%20.8e%20.8e%20.8e\n", _cells[i]->name().c_str(), _dL * (i + 0.5), _cells[i]->p(), _cells[i]->T(), _cells[i]->rho(), _cells[i]->h());
 
   fprintf(file, "\n%20s%20s%20s%20s%20s%20s\n", "Edge", "x", "v", "T", "mass_flux", "enthalpy_flux");
   for (unsigned i = 0; i < _edges.size(); i++)
-    fprintf(file, "%20s%20.6e%20.6e%20.6e%20.6e%20.6e\n", _edges[i]->name().c_str(), _dL * i, _edges[i]->v(), _edges[i]->T_edge(), _edges[i]->mass_flux(), _edges[i]->enthalpy_flux());
+    fprintf(file, "%20s%20.8e%20.8e%20.8e%20.8e%20.8e\n", _edges[i]->name().c_str(), _dL * i, _edges[i]->v(), _edges[i]->T_edge(), _edges[i]->mass_flux(), _edges[i]->enthalpy_flux());
   fprintf(file, "\n");
 }
 

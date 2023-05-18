@@ -50,12 +50,22 @@ struct PETScApp
   Vec u;
   /// Unknown vector old
   Vec u_old;
+  /// A backup copy for the unknown vector
+  // (in case retry a failed time step, 'u' might have been into a unrecoverable status)
+  Vec u_backup;
   /// Total residual (= res_transient + res_spatial)
   Vec r;
   /// Residual contribution from transient terms
   Vec res_tran;
   /// Residual contribution from non-transient spatial terms
   Vec res_spatial;
+
+  // It is common to see a time step fail, and we have to come back to retry solving the same time step
+  // with a smaller time step. Because the unknown vector 'u' might be in a unrecoverable status, we would
+  // need a copy of the last known good solution.
+  // The two functions are for doing backup the good solution, and get the good solution back.
+  void backupSolution();
+  void restoreSolutionFromBackup();
 
   void setupPETScWorkSpace();
   void setupPETScIC();

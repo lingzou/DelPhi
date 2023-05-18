@@ -172,6 +172,7 @@ DelPhiSimulation::setupPETScIC(double * u)
     unsigned offset = it.second->getDOFoffset();
     it.second->setupIC(u + offset);
   }
+  _p_PETScApp->backupSolution();
 }
 
 void
@@ -213,6 +214,13 @@ DelPhiSimulation::externalSolve()
 void
 DelPhiSimulation::onTimestepBegin()
 {
+  // onTimestepBegin() happens at the beginning of a time step before it steps into solving the time step.
+  // however, sometimes a time step fails and MOOSE will try the same time step with typically a reduced time step size
+  // however, onTimestepBegin() does not know if this is a fresh new time step or retry of a failed one.
+  // It is safe to always get the 'good' copy of solution which stored at the end of previous successful time step
+  // or initial condition if time step 0
+  _p_PETScApp->restoreSolutionFromBackup();
+
   for (auto & it : _comp_by_name)
     it.second->onTimestepBegin();
 }
@@ -220,6 +228,12 @@ DelPhiSimulation::onTimestepBegin()
 void
 DelPhiSimulation::onTimestepEnd()
 {
+  // onTimestepEnd() happens at the end of a time step and ONLY when a time step succeeds,
+  // so it is a good time to keep a 'good' copy of the solution in case next time step struggles to converge and need
+  // this 'good' copy to retry the time step with changes such as reduced time step size
+  _p_PETScApp->backupSolution();
+
+  // loop over components for them to handle necessary operations such as save solutions to 'old time step solutions'
   for (auto & it : _comp_by_name)
     it.second->onTimestepEnd();
 

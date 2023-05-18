@@ -18,6 +18,7 @@ PETScApp::setupPETScWorkSpace()
   VecSetSizes(u, PETSC_DECIDE, n_dofs);
   VecSetFromOptions(u);
   VecDuplicate(u, &u_old);
+  VecDuplicate(u, &u_backup);
   VecDuplicate(u, &r);
   VecDuplicate(u, &res_tran);
   VecDuplicate(u, &res_spatial);
@@ -53,6 +54,20 @@ PETScApp::setupPETScIC()
   VecGetArray(u, &uu);
   p_sim->setupPETScIC(uu);
   VecRestoreArray(u, &uu);
+}
+
+void
+PETScApp::backupSolution()
+{
+  VecCopy(u, u_backup);
+  std::cerr << "solution is backed up.\n";
+}
+
+void
+PETScApp::restoreSolutionFromBackup()
+{
+  VecCopy(u_backup, u);
+  std::cerr << "solution is restored from backup.\n";
 }
 
 void

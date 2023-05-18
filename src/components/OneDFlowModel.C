@@ -60,13 +60,12 @@ OneDCell::setExtendedNeighborCells()
   _w_cell = _w_edge->getOtherSideCell(this);
   _e_cell = _e_edge->getOtherSideCell(this);
 
-  /* debug
+  /*debug
   std::cerr << ((_w_cell == NULL) ? "NULL" : _w_cell->name()) << " - "
             << _w_edge->name() << " - "
             << name() << " - "
             << _e_edge->name() << " - "
-            << ((_e_cell == NULL) ? "NULL" : _e_cell->name()) << std::endl;
-  */
+            << ((_e_cell == NULL) ? "NULL" : _e_cell->name()) << std::endl;*/
 
   addConnectedDOFs(_pDOF);
   addConnectedDOFs(_TDOF);
@@ -82,6 +81,46 @@ OneDCell::setExtendedNeighborCells()
   }
   addConnectedDOFs(_w_edge->vDOF());
   addConnectedDOFs(_e_edge->vDOF());
+}
+
+BranchCell::BranchCell(const InputParameters & parameters) :
+  CellBase(parameters)
+{
+}
+
+void
+BranchCell::addEdge(EdgeBase* edge, Real edge_out_norm)
+{
+  _connected_edges.push_back(edge);
+  _edge_out_norms.push_back(edge_out_norm);
+}
+
+void
+BranchCell::setExtendedNeighborCells()
+{
+  for (unsigned i = 0; i < _connected_edges.size(); i++)
+    _connected_cells.push_back(_connected_edges[i]->getOtherSideCell(this));
+
+  /* debug
+  std::cerr << name() << std::endl;
+  for (unsigned i = 0; i < _connected_edges.size(); i++)
+  {
+    std::cerr << "  edge = " << _connected_edges[i]->name() << std::endl;
+    std::cerr << "  cell = " << _connected_cells[i]->name() << std::endl;
+  }*/
+
+  addConnectedDOFs(_pDOF);
+  addConnectedDOFs(_TDOF);
+  for (auto & edge : _connected_edges)
+    if (edge)
+      addConnectedDOFs(edge->vDOF());
+
+  for (auto & cell : _connected_cells)
+    if (cell)
+    {
+      addConnectedDOFs(cell->pDOF());
+      addConnectedDOFs(cell->TDOF());
+    }
 }
 
 EdgeBase::EdgeBase(const InputParameters & parameters) :
@@ -230,4 +269,48 @@ pBCEdgeOutlet::pBCEdgeOutlet(const InputParameters & parameters) :
     mooseError("pBCEdgeOutlet: '" + name() + "' missing west_cell or west_cell is not a OneDCell.");
 
   if (_e_cell) mooseError("Not expecting east_cell in pBCEdgeOutlet");
+}
+
+brvEdgeInlet::brvEdgeInlet(const InputParameters & parameters) :
+  EdgeBase(parameters)
+{
+  // expect w_cell to be BranchCell
+  if (_w_cell && dynamic_cast<BranchCell*>(_w_cell))
+  {
+    (dynamic_cast<BranchCell*>(_w_cell))->addEdge(this, /*out_norm*/ 1.0);
+    _dL_edge += 0.5 * _w_cell->dL();
+  }
+  else
+    mooseError("brvEdgeInlet: '" + name() + "' missing west_cell or west_cell is not a BranchCell.");
+
+  // expect e_cell to be OneDCell
+  if (_e_cell && dynamic_cast<OneDCell*>(_e_cell))
+  {
+    (dynamic_cast<OneDCell*>(_e_cell))->setWestEdge(this);
+    _dL_edge += 0.5 * _e_cell->dL();
+  }
+  else
+    mooseError("brvEdgeInlet: '" + name() + "' missing east_cell or east_cell is not a OneDCell.");
+}
+
+brvEdgeOutlet::brvEdgeOutlet(const InputParameters & parameters) :
+  EdgeBase(parameters)
+{
+  // expect w_cell to be OneDCell
+  if (_w_cell && dynamic_cast<OneDCell*>(_w_cell))
+  {
+    (dynamic_cast<OneDCell*>(_w_cell))->setEastEdge(this);
+    _dL_edge += 0.5 * _w_cell->dL();
+  }
+  else
+    mooseError("brvEdgeOutlet: '" + name() + "' missing west_cell or west_cell is not a BranchCell.");
+
+  // expect e_cell to be BranchCell
+  if (_e_cell && dynamic_cast<BranchCell*>(_e_cell))
+  {
+    (dynamic_cast<BranchCell*>(_e_cell))->addEdge(this, /*out_norm*/ -1.0);
+    _dL_edge += 0.5 * _e_cell->dL();
+  }
+  else
+    mooseError("brvEdgeOutlet: '" + name() + "' missing east_cell or east_cell is not a OneDCell.");
 }

@@ -74,6 +74,24 @@ protected:
   CellBase * _e_cell;
 };
 
+class BranchCell : public CellBase
+{
+public:
+  BranchCell(const InputParameters & parameters);
+  virtual ~BranchCell() {}
+
+  virtual void addEdge(EdgeBase* edge, Real edge_out_norm);
+
+  // there is no 'other' side because there is unknown (could be many) connected edges
+  virtual EdgeBase * getOtherSideEdge(EdgeBase * /*edge*/) override { return NULL; }
+  virtual void setExtendedNeighborCells() override;
+
+protected:
+  std::vector<CellBase*> _connected_cells;
+  std::vector<EdgeBase*> _connected_edges;
+  std::vector<Real> _edge_out_norms;
+};
+
 class EdgeBase
 {
 public:
@@ -273,4 +291,38 @@ public:
   virtual Real dp_dx() override { return (_p_bc - _w_cell->p()) / _dL_edge; }
 
   virtual Real rho_edge() override final { return _w_cell->rho(); }
+};
+
+class brvEdgeInlet : public EdgeBase
+{
+public:
+  brvEdgeInlet(const InputParameters & parameters);
+  virtual ~brvEdgeInlet() {}
+
+  virtual Real T_edge() override { return (_v > 0.0) ? _w_cell->T() : _e_cell->T(); }
+  virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _e_cell->rho(); }
+  virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _e_cell->rhoh(); }
+  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
+  virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
+  virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
+
+  // TODO: update to volume based average
+  virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
+};
+
+class brvEdgeOutlet : public EdgeBase
+{
+public:
+  brvEdgeOutlet(const InputParameters & parameters);
+  virtual ~brvEdgeOutlet() {}
+
+  virtual Real T_edge() override { return (_v > 0.0) ? _w_cell->T() : _e_cell->T(); }
+  virtual Real mass_flux() override { return (_v > 0.0) ? _v * _w_cell->rho() : _v * _e_cell->rho(); }
+  virtual Real enthalpy_flux() override { return (_v > 0.0) ? _v * _w_cell->rhoh() : _v * _e_cell->rhoh(); }
+  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
+  virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
+  virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
+
+  // TODO: update to volume based average
+  virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
 };
