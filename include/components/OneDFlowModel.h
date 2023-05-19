@@ -5,6 +5,33 @@
 class CellBase;
 class EdgeBase;
 
+/**
+ * Under the context of finite volume method (FVM), a cell (or control volume) is one of the most
+ * fundamental discretization units where volume-averaged quantities are defined and
+ * in general, conservation laws are observed, e.g., mass and energy conservations.
+ *
+ * As for stagerred-grid FVM in flow problem applications, a cell is where the scalar quantities are
+ * defined, for example, pressure (p) and temperature (T) for single-phase flow, and dependent
+ * variables such as density and enthalpy naturally follows. The vector variables such as velocity
+ * instead are defined on edges (or surfaces), defined later.
+ *
+ * In this application, the cell can be a one-dimensional cell in a flow channel type of component,
+ * which has length, direction, and expecting two edges on its two ends (we call them west and east
+ * end).
+ *
+ *                   -------------------------
+ *  west_edge (v)  ->|    OneDCell (p, T)    |-> east_edge (v)
+ *                   -------------------------
+ *
+ * The cell can also be an arbitrary one that having no real shape, or we do not need and cannot
+ * capture its shape, but rather more concerned on its averaged behavior, such as a well-mixing
+ * large volume with multiple inlet/outlet connections.
+ */
+
+/**
+ * CellBase is the base class for all cells (control volumes) where the most comman data
+ * and methods are defined.
+ */
 class CellBase
 {
 public:
@@ -54,6 +81,13 @@ protected:
   std::set<unsigned> _connected_DOFs;
 };
 
+/**
+ * OneDCell is a derived class from CellBase for the directional one-dimensional cell
+ * for one-dimensional flow channels.
+ * It is expected that it is connected with two edges, west and east edges.
+ * However, the cells to its west and east sides are only conditional. For example, if the
+ * OneDCell is on an inlet boundary, the west side cell does not exist.
+ */
 class OneDCell : public CellBase
 {
 public:
@@ -74,6 +108,10 @@ protected:
   CellBase * _e_cell;
 };
 
+/**
+ * BranchCell is a derived class from CellBase which represents an arbitrary volume
+ * with possibly multiple connected flow channels.
+ */
 class BranchCell : public CellBase
 {
 public:
@@ -92,6 +130,13 @@ protected:
   std::vector<Real> _edge_out_norms;
 };
 
+/**
+ * EdgeBase is the base class for all edges where velocity is defined and the momentum
+ * equation is solved.
+ * Edges (or surfaces) always attach to cells (control volume) and compute
+ * mass and energy flux such that conservations of mass and energy in the connected
+ * cells can be computed.
+ */
 class EdgeBase
 {
 public:
@@ -142,6 +187,10 @@ protected:
   std::set<unsigned> _connected_DOFs;
 };
 
+/**
+ * IntEdge is a derived class from EdgeBase which is in between two OneDCells.
+ * For an IntEdge, the west cell and edge, east cell and edge are always expected.
+ */
 class IntEdge : public EdgeBase
 {
 public:
@@ -159,9 +208,12 @@ public:
   virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
 };
 
-// snjEdge is a type of IntEdge for connecting the ends of two pipes
-// not like IntEdge is inside a single pipe
-// it will need special treatment such as area change, irregular connection such as inlet-inlet situations
+/**
+ * snjEdge is a special type of IntEdge for connecting the ends of two pipes, not like IntEdge
+ * inside a single pipe. For now, we limit the use of snjEdge to connect the outlet of a pipe and
+ * inlet of the other pipe, while the order does not matter. For now, we don't allow for connection
+ * like pipe-1(out) - pipe-2(out).
+ */
 class snjEdge : public IntEdge
 {
 public:
@@ -169,6 +221,11 @@ public:
   virtual ~snjEdge() {}
 };
 
+/**
+ * vBCEdge derives from EdgeBase, and serves as the base class for velocity boundary type of
+ * implementation. For velocity boundary, v_bc and T_bc are required, while pressure is a projected
+ * value from interior domains.
+ */
 class vBCEdge : public EdgeBase
 {
 public:
@@ -185,6 +242,11 @@ protected:
   Real _p_ghost;
 };
 
+/**
+ * vBCEdgeInlet is for setting velocity boundary at the 'inlet' side of a pipe.
+ * Here, 'inlet' does not mean flow will defintely go into the flow channel, while it is
+ * more a geometric definition.
+ */
 class vBCEdgeInlet : public vBCEdge
 {
 public:
@@ -201,6 +263,10 @@ public:
   virtual Real rho_edge() final { return _e_cell->rho(); }
 };
 
+/**
+ * vBCEdgeOutlet is for setting velocity boundary at the 'outlet' side of a pipe.
+ * Similarly, 'outlet' is a geometric concept.
+ */
 class vBCEdgeOutlet : public vBCEdge
 {
 public:
@@ -217,8 +283,14 @@ public:
   virtual Real rho_edge() final { return _w_cell->rho(); }
 };
 
-
-
+/**
+ * snjShadowEdge is a very special type of vBCEdge.
+ * When two pipes are connected with a SingleJunction (snjEdge), there are two boundary edges
+ * overlapping. One of the two overlapping edges is the snjEdge, which handles the real connections,
+ * computations, etc. There is therefore a redundant edge, which you cannot and should not handle
+ * the connections, otherwise the connected cells got confused who they are really talking to. Thus
+ * the snjShadowEdge design, which just mimics what the 'real' edge does.
+ */
 class snjShadowEdge : public vBCEdge
 {
 public:
@@ -227,6 +299,7 @@ public:
   {}
   virtual ~snjShadowEdge() {}
 
+  // a shadow edge mimics what the 'real' edge does
   virtual Real T_edge() override { return _real_edge->T_edge(); }
   virtual Real mass_flux() override { return _real_edge->mass_flux(); }
   virtual Real enthalpy_flux() override { return _real_edge->enthalpy_flux(); }
@@ -236,7 +309,7 @@ public:
 
   virtual void updateGhostPressure(Real /*p_ghost*/) override { /* nothing to do */ }
 
-  // Key implementation: show edge has the same velocity as the real edge
+  // Key implementation: shadow edge has the same velocity as the real edge
   virtual Real computeDirichletBCResidual() override { return _v - _real_edge->v(); }
 
   virtual void setExtendedNeighborEdges() override
@@ -250,7 +323,11 @@ protected:
   snjEdge * _real_edge;
 };
 
-
+/**
+ * pBCEdge derives from EdgeBase, and serves as the base class for pressure boundary type of
+ * implementation. For pressure boundary, p_bc and T_bc are required, while velocity is part of the
+ * results.
+ */
 class pBCEdge : public EdgeBase
 {
 public:
@@ -263,6 +340,9 @@ protected:
   Real _p_bc, _T_bc;
 };
 
+/**
+ * pBCEdgeInlet is for setting pressure boundary at the 'inlet' side of a pipe.
+ */
 class pBCEdgeInlet : public pBCEdge
 {
 public:
@@ -278,6 +358,9 @@ public:
   virtual Real rho_edge() override final { return _e_cell->rho(); }
 };
 
+/**
+ * pBCEdgeOutlet is for setting pressure boundary at the 'outlet' side of a pipe.
+ */
 class pBCEdgeOutlet : public pBCEdge
 {
 public:
@@ -293,6 +376,10 @@ public:
   virtual Real rho_edge() override final { return _w_cell->rho(); }
 };
 
+/**
+ * brvEdgeInlet is for connecting the 'inlet' side of a pipe and a VolumeBranch (BranchCell),
+ * so the positive flow is pointing from BranchCell (west side) to the OneDCell (east side).
+ */
 class brvEdgeInlet : public EdgeBase
 {
 public:
@@ -310,6 +397,10 @@ public:
   virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
 };
 
+/**
+ * brvEdgeOutlet is for connecting the 'outlet' side of a pipe and a VolumeBranch (BranchCell),
+ * so the positive flow is pointing from OneDCell (west side) to the BranchCell (east side).
+ */
 class brvEdgeOutlet : public EdgeBase
 {
 public:
