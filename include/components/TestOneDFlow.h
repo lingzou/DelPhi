@@ -27,8 +27,8 @@ public:
   // data access
   virtual std::vector<OneDCell*> & getCells() override { return _cells; }
   virtual std::vector<EdgeBase*> & getEdges() override { return _edges; }
-
   virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) override;
+  virtual Real getArea() const override { return _flow_area; }
 
   // text-based output
   virtual void writeTextOutput() override;

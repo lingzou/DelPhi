@@ -7,6 +7,7 @@ VolumeBranch::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
+  params.addParam<Real>("volume", 0.0, "Volume of the volume branch");
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
   params.addRequiredParam<std::vector<std::string>>("inputs", "Names of the inlet component");
   params.addRequiredParam<std::vector<std::string>>("outputs", "Names of the outlet component");
@@ -19,6 +20,7 @@ VolumeBranch::validParams()
 
 VolumeBranch::VolumeBranch(const InputParameters & parameters)
   : ZeroDComponent(parameters),
+  _vol(getParam<Real>("volume")),
   _inputs(getParam<std::vector<std::string>>("inputs")),
   _outputs(getParam<std::vector<std::string>>("outputs"))
 {
@@ -79,6 +81,7 @@ VolumeBranch::addExternalVariables()
       brvEdgeInlet * edge = new brvEdgeInlet(pars);
       //_brh_cell->addEdge(edge, 1.0);
       _outgoing_edges.push_back(edge);
+      _outgoing_areas.push_back(comp_1d->getArea());
       comp_1d->setBoundaryEdge(end_type, edge);
     }
     else if (end_type == DELPHI::OUT)
@@ -93,6 +96,7 @@ VolumeBranch::addExternalVariables()
       brvEdgeOutlet * edge = new brvEdgeOutlet(pars);
       //_brh_cell->addEdge(edge, -1.0);
       _incoming_edges.push_back(edge);
+      _incoming_areas.push_back(comp_1d->getArea());
       comp_1d->setBoundaryEdge(end_type, edge);
     }
     else
@@ -123,24 +127,30 @@ VolumeBranch::updateSolution(double * u)
 void
 VolumeBranch::computeTranRes(double * res)
 {
-  Real vol = 1.0;
-  res[0] = vol * (_brh_cell->rho() - _brh_cell->rho_o()) / _sim.dt() / _rho_ref;
-  res[1] = vol * (_brh_cell->rhoh() - _brh_cell->rhoh_o()) / _sim.dt() / _rhoh_ref;
+  res[0] = _vol * (_brh_cell->rho() - _brh_cell->rho_o()) / _sim.dt() / _rho_ref;
+  res[1] = _vol * (_brh_cell->rhoh() - _brh_cell->rhoh_o()) / _sim.dt() / _rhoh_ref;
 }
 
 void
 VolumeBranch::computeSpatialRes(double * res)
 {
-  for (auto & out : _outgoing_edges)
+  for (unsigned i = 0; i < _outgoing_edges.size(); i++)
   {
-    res[0] += out->mass_flux() / _rho_ref;
-    res[1] += out->enthalpy_flux() / _rhoh_ref;
+    Real area = _outgoing_areas[i];
+
+    res[0] += _outgoing_edges[i]->mass_flux() * area; // rho * u * A
+    res[1] += _outgoing_edges[i]->enthalpy_flux() * area; // rho * u * h * A
   }
-  for (auto & in : _incoming_edges)
+  for (unsigned i = 0; i < _incoming_edges.size(); i++)
   {
-    res[0] -= in->mass_flux() / _rho_ref;
-    res[1] -= in->enthalpy_flux() / _rhoh_ref;
+    Real area = _incoming_areas[i];
+
+    res[0] -= _incoming_edges[i]->mass_flux() * area;
+    res[1] -= _incoming_edges[i]->enthalpy_flux() * area;
   }
+  // scaling
+  res[0] /= _rho_ref;
+  res[1] /= _rhoh_ref;
 }
 
 void

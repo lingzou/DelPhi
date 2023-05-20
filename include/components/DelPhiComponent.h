@@ -79,6 +79,7 @@ public:
   virtual std::vector<OneDCell*> & getCells() = 0;
   virtual std::vector<EdgeBase*> & getEdges() = 0;
   virtual void setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge) = 0;
+  virtual Real getArea() const = 0;
 
 public:
   static InputParameters validParams();

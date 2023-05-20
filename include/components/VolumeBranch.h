@@ -28,6 +28,7 @@ public:
 
 protected:
   /// Name of the connecting component boundaries
+  Real _vol;
   std::vector<std::string> _inputs;
   std::vector<std::string> _outputs;
   const SinglePhaseFluidProperties * _eos;
@@ -35,7 +36,9 @@ protected:
 
   BranchCell * _brh_cell;
   std::vector<brvEdgeInlet *> _outgoing_edges;
+  std::vector<Real> _outgoing_areas;
   std::vector<brvEdgeOutlet *> _incoming_edges;
+  std::vector<Real> _incoming_areas;
 
 public:
   static InputParameters validParams();

@@ -46,4 +46,9 @@
     input = 'one_in_two_out.i'
     exodiff = 'one_in_two_out_out.e'
   []
+  [two_in_one_out]
+    type = 'Exodiff'
+    input = 'two_in_one_out.i'
+    exodiff = 'two_in_one_out_out.e'
+  []
 []

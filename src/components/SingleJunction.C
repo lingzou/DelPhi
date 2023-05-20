@@ -56,6 +56,10 @@ SingleJunction::addExternalVariables()
                 " and the (in) of the other pipe, e.g.,\n  inputs = 'pipe-1(out)'\n  outputs = 'pipe-2(in)'\n"
                 "The order does not matter, e.g.,\n  outputs = 'pipe-1(out)'\n  inputs = 'pipe-2(in)'\n");
 
+  // for now, let's require the two connected pipe having the same flow area
+  if (std::fabs(comp_1d_in->getArea() - comp_1d_out->getArea()) > 1e-9)
+    mooseError("Fow SingleJunction, '" + name() + "', it is required that the two connected pipes must have the same flow areas.");
+
   // snjEdge
   InputParameters pars = emptyInputParameters();
   pars.set<std::string>("name") = name() + ":snjEdge";
