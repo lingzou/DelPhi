@@ -20,6 +20,11 @@ TestOneDFlow::validParams()
   params.addRequiredParam<Real>("initial_V", "Initial value for velocity");
   params.addRequiredParam<Real>("initial_T", "Initial value for temperature");
 
+  params.addRequiredParam<Real>("A", "Flow area");
+  params.addRequiredParam<Real>("Dh", "Hydraulic diameter");
+  params.addParam<Real>("f", 0, "friction factor");
+  params.addParam<Real>("heat_source", 0, "volumetric heat source");
+
   return params;
 }
 
@@ -27,7 +32,11 @@ TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
   : OneDComponent(parameters),
     _length(getParam<Real>("length")),
     _n_elem(getParam<unsigned>("n_elems")),
-    _dL(_length / _n_elem)
+    _dL(_length / _n_elem),
+    _flow_area(getParam<Real>("A")),
+    _dh(getParam<Real>("Dh")),
+    _f(getParam<Real>("f")),
+    _qv(getParam<Real>("heat_source"))
 {
 }
 
@@ -77,12 +86,7 @@ TestOneDFlow::addExternalVariables()
   _n_DOFs = (_n_elem) + (_n_elem) + (_n_elem + 1); // p + T + v
 
   // handle eos first
-  const UserObjectName & uo_name = getParam<UserObjectName>("eos");
-  const UserObject & uo = _sim.getUserObject<UserObject>(uo_name);
-  if (dynamic_cast<const SinglePhaseFluidProperties *>(&uo) == nullptr)
-    mooseError("cannot convert: " + uo_name);
-  else
-    _eos = dynamic_cast<const SinglePhaseFluidProperties *>(&uo);
+  _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));
 
   _cells.resize(_n_elem, NULL);
   for (unsigned i = 0; i < _n_elem; i++)
@@ -206,8 +210,6 @@ void
 TestOneDFlow::computeSpatialRes(double * res)
 {
   // Momentum equations RHS
-  Real f = 0.1;
-  Real dh = 0.01;
   for(unsigned i = 0; i < _n_elem + 1; i++) // loop on edges
   {
     Real rho_edge = _edges[i]->rho_edge();
@@ -216,7 +218,7 @@ TestOneDFlow::computeSpatialRes(double * res)
     Real dv_dx = _edges[i]->dv_dx();
     Real dp_dx = _edges[i]->dp_dx();
     // friction term
-    Real fric = 0.5 * f / dh * rho_edge * v * std::fabs(v);
+    Real fric = 0.5 * _f / _dh * rho_edge * v * std::fabs(v);
 
     // assemble spatial terms
     res[3*i] = (rho_edge * v * dv_dx + dp_dx + fric) / _rho_ref;
@@ -237,7 +239,7 @@ TestOneDFlow::computeSpatialRes(double * res)
     EdgeBase * e_edge = _cells[i]->eEdge();
 
     res[3*i+1] = (e_edge->mass_flux() - w_edge->mass_flux()) / _dL / _rho_ref;
-    res[3*i+2] = ((e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - 1e5) / _rhoh_ref; // 1e3 source term
+    res[3*i+2] = ((e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - _qv) / _rhoh_ref; // 1e3 source term
   }
 }
 

@@ -3,6 +3,7 @@
 #include "ExternalProblem.h"
 #include "DelPhiMesh.h"
 #include "PETScAppInterface.h"
+#include "SinglePhaseFluidProperties.h"
 
 class DelPhiComponent;
 class OneDComponent;
@@ -40,6 +41,7 @@ public:
   virtual DelPhiMesh & phoenix_mesh() { return _delphi_mesh; }
 
   // Helper API functions
+  virtual const SinglePhaseFluidProperties * getSinglePhaseEOS(const UserObjectName & name);
   virtual void addMooseAuxVar(const std::string & name,
                               const FEType & type,
                               const std::vector<SubdomainName> & subdomain_names);

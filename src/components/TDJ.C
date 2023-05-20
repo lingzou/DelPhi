@@ -27,12 +27,7 @@ void
 TDJ::addExternalVariables()
 {
   // handle eos first
-  const UserObjectName & uo_name = getParam<UserObjectName>("eos");
-  const UserObject & uo = _sim.getUserObject<UserObject>(uo_name);
-  if (dynamic_cast<const SinglePhaseFluidProperties *>(&uo) == nullptr)
-    mooseError("cannot convert: " + uo_name);
-  else
-    _eos = dynamic_cast<const SinglePhaseFluidProperties *>(&uo);
+  _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));
 
   std::string comp_name;
   DELPHI::EEndType end_type;

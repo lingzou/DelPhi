@@ -23,6 +23,10 @@
     initial_P = 1e5
     initial_V = 0.5
     initial_T = 650
+    Dh = 0.01
+    f = 0.1
+    A = 1
+    heat_source = 1e5
   []
 
   [brv]
@@ -45,6 +49,10 @@
     initial_P = 1e5
     initial_V = 0.5
     initial_T = 650
+    Dh = 0.01
+    f = 0.1
+    A = 1
+    heat_source = 1e5
   []
 
   [pipe-3]
@@ -57,6 +65,10 @@
     initial_P = 1e5
     initial_V = 0.5
     initial_T = 650
+    Dh = 0.01
+    f = 0.1
+    A = 1
+    heat_source = 1e5
   []
 
   [outlet-2]

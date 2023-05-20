@@ -37,6 +37,10 @@ protected:
   Real _length;
   unsigned _n_elem;
   Real _dL;
+  Real _flow_area;
+  Real _dh;
+  Real _f;
+  Real _qv;
   const SinglePhaseFluidProperties * _eos;
   Real _rho_ref, _rhoh_ref;
 

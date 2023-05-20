@@ -41,12 +41,7 @@ VolumeBranch::addExternalVariables()
   _n_DOFs = 2; // p and T of this branch
 
   // handle eos first
-  const UserObjectName & uo_name = getParam<UserObjectName>("eos");
-  const UserObject & uo = _sim.getUserObject<UserObject>(uo_name);
-  if (dynamic_cast<const SinglePhaseFluidProperties *>(&uo) == nullptr)
-    mooseError("cannot convert: " + uo_name);
-  else
-    _eos = dynamic_cast<const SinglePhaseFluidProperties *>(&uo);
+  _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));
 
   // BranchCell of this VolumeBranch
   InputParameters pars = emptyInputParameters();

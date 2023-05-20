@@ -127,6 +127,16 @@ DelPhiSimulation::addExternalVariables()
   }
 }
 
+const SinglePhaseFluidProperties *
+DelPhiSimulation::getSinglePhaseEOS(const UserObjectName & name)
+{
+  const UserObject & uo = getUserObject<UserObject>(name);
+  if (dynamic_cast<const SinglePhaseFluidProperties *>(&uo) == nullptr)
+    mooseError("UserObject '" + name + "' is not a type of SinglePhaseFluidProperties.");
+  else
+    return dynamic_cast<const SinglePhaseFluidProperties *>(&uo);
+}
+
 void
 DelPhiSimulation::addMooseAuxVar(const std::string & name,
                                   const FEType & type,
