@@ -101,7 +101,8 @@
   # LeadFluidProperties is completely incompressible, i.e., drho_dp = 0,
   # and thus, we would like PTESc understand we have zeros on diagonal
   # and PETSc should use this option
-  petsc_options = '-pc_factor_nonzeros_along_diagonal'
+  petsc_options_iname = '-pc_factor_shift_type -pc_factor_shift_amount'
+  petsc_options_value = 'nonzero 1e-8'
 []
 
 [Outputs]
