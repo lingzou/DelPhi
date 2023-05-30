@@ -7,8 +7,8 @@ TDJ::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
-  params.addRequiredParam<Real>("v_bc", "Velocity boundary value");
-  params.addRequiredParam<Real>("T_bc", "Temperature boundary value");
+  params.addRequiredParam<FunctionName>("v_bc", "Velocity boundary function");
+  params.addRequiredParam<FunctionName>("T_bc", "Temperature boundary function");
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
   params.addRequiredParam<std::vector<std::string>>("input", "Names of the connected components");
 
@@ -41,12 +41,13 @@ TDJ::addExternalVariables()
 
   // boundary vEdge
   InputParameters pars = emptyInputParameters();
+  pars.set<DelPhiSimulation *>("_sim") = &_sim;
   pars.set<std::string>("name") = name() + ":vEdge";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   pars.set<CellBase *>("west_cell") = inlet ? NULL : (comp_1d->getCells()).back();
   pars.set<CellBase *>("east_cell") = inlet ? (comp_1d->getCells()).front():  NULL;
-  pars.set<Real>("v_bc") = getParam<Real>("v_bc");
-  pars.set<Real>("T_bc") = getParam<Real>("T_bc");
+  pars.set<FunctionName>("v_bc") = getParam<FunctionName>("v_bc");
+  pars.set<FunctionName>("T_bc") = getParam<FunctionName>("T_bc");
 
   EdgeBase * edge = NULL;
   if (inlet)

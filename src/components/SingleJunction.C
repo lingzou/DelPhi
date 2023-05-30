@@ -62,6 +62,7 @@ SingleJunction::addExternalVariables()
 
   // snjEdge
   InputParameters pars = emptyInputParameters();
+  pars.set<DelPhiSimulation *>("_sim") = &_sim;
   pars.set<std::string>("name") = name() + ":snjEdge";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   if (end_type_in == DELPHI::OUT) // pipe_in (out) <-> SNJ <-> pipe_out (in)
@@ -79,14 +80,13 @@ SingleJunction::addExternalVariables()
   comp_1d_in->setBoundaryEdge(end_type_in, edge);
 
   InputParameters pars_s = emptyInputParameters();
+  pars_s.set<DelPhiSimulation *>("_sim") = &_sim;
   pars_s.set<std::string>("name") = name() + ":snjEdge_shadow";
   pars_s.set<snjEdge *>("real_edge") = edge;
   pars_s.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   // a show edge just mimic what the true edge does but having no real connections and v_bc, T_bc
   pars_s.set<CellBase *>("west_cell") = NULL;
   pars_s.set<CellBase *>("east_cell") = NULL;
-  pars_s.set<Real>("v_bc") = 0.0; // dummy value
-  pars_s.set<Real>("T_bc") = 0.0; // dummy value
   EdgeBase * shadow_edge = new snjShadowEdge(pars_s);
   comp_1d_out->setBoundaryEdge(end_type_out, shadow_edge);
 }

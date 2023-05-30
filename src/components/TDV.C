@@ -41,6 +41,7 @@ TDV::addExternalVariables()
 
   // boundary pEdge
   InputParameters pars = emptyInputParameters();
+  pars.set<DelPhiSimulation *>("_sim") = &_sim;
   pars.set<std::string>("name") = name() + ":pEdge";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   pars.set<CellBase *>("west_cell") = inlet ? NULL : (comp_1d->getCells()).back();

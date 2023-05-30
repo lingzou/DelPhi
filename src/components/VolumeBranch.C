@@ -47,6 +47,7 @@ VolumeBranch::addExternalVariables()
 
   // BranchCell of this VolumeBranch
   InputParameters pars = emptyInputParameters();
+  pars.set<DelPhiSimulation *>("_sim") = &_sim;
   pars.set<std::string>("name") = name() + ":BranchCell";
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   pars.set<Real>("dL") = 0; // we will revisit this value
@@ -73,6 +74,7 @@ VolumeBranch::addExternalVariables()
     {
       // brvEdgeInlet
       InputParameters pars = emptyInputParameters();
+      pars.set<DelPhiSimulation *>("_sim") = &_sim;
       pars.set<std::string>("name") = name() + ":brvEdgeInlet:" + std::to_string(i);
       pars.set<CellBase *>("west_cell") = _brh_cell;
       pars.set<CellBase *>("east_cell") = (comp_1d->getCells()).front();
@@ -88,6 +90,7 @@ VolumeBranch::addExternalVariables()
     {
       // brvEdgeOutlet
       InputParameters pars = emptyInputParameters();
+      pars.set<DelPhiSimulation *>("_sim") = &_sim;
       pars.set<std::string>("name") = name() + ":brvEdgeOutlet:" + std::to_string(i);
       pars.set<CellBase *>("west_cell") = (comp_1d->getCells()).back();
       pars.set<CellBase *>("east_cell") =  _brh_cell;

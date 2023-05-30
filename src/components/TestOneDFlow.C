@@ -92,6 +92,7 @@ TestOneDFlow::addExternalVariables()
   for (unsigned i = 0; i < _n_elem; i++)
   {
     InputParameters pars = emptyInputParameters();
+    pars.set<DelPhiSimulation *>("_sim") = &_sim;
     pars.set<std::string>("name") = name() + ":cell_" + std::to_string(i);
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
     pars.set<Real>("dL") = _dL;
@@ -103,6 +104,7 @@ TestOneDFlow::addExternalVariables()
   for (unsigned i = 1; i < _n_elem; i++) // int edge only, bc edges will be handled later
   {
     InputParameters pars = emptyInputParameters();
+    pars.set<DelPhiSimulation *>("_sim") = &_sim;
     pars.set<std::string>("name") = name() + ":int_edge_" + std::to_string(i);
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
     pars.set<CellBase *>("west_cell") = _cells[i-1];
@@ -224,13 +226,8 @@ TestOneDFlow::computeSpatialRes(double * res)
     res[3*i] = (rho_edge * v * dv_dx + dp_dx + fric) / _rho_ref;
   }
 
-  // apply Dirichlet BC for inlet/outlet v (if applicable)
-  vBCEdge * inlet_edge = dynamic_cast<vBCEdge *>(_edges.front());
-  if (inlet_edge)
-    res[0] = inlet_edge->computeDirichletBCResidual();
-  vBCEdge * outlet_edge = dynamic_cast<vBCEdge *>(_edges.back());
-  if (outlet_edge)
-    res[_n_DOFs-1] = outlet_edge->computeDirichletBCResidual();
+  _edges.front()->applyDirichletBC(res[0]);
+  _edges.back()->applyDirichletBC(res[_n_DOFs-1]);
 
   // spatial terms for mass and energy equations
   for(unsigned i = 0; i < _n_elem; i++) //loop on elements

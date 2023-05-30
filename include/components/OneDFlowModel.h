@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SinglePhaseFluidProperties.h"
+#include "Function.h"
 
 class CellBase;
 class EdgeBase;
@@ -66,7 +67,9 @@ public:
 
 protected:
   const InputParameters & _pars;
+  DelPhiSimulation & _sim;
   std::string _name;
+
   Real _dL_cell;
 
   Real _p, _p_o;
@@ -162,6 +165,7 @@ public:
   virtual void initialize(Real v)     final { _v = v; _v_o = v; }
   virtual void updateSolution(Real v) final { _v = v; }
   virtual void saveOldSlns()          final { _v_o = _v; }
+  virtual void applyDirichletBC(Real & /*res*/) { /*not all edges has DirichletBC*/ }
 
   virtual CellBase * getOtherSideCell(CellBase * cell);
   virtual void setExtendedNeighborEdges();
@@ -171,7 +175,9 @@ public:
 
 protected:
   const InputParameters & _pars;
+  DelPhiSimulation & _sim;
   std::string _name;
+
   Real _dL_edge;
 
   Real _v, _v_o;
@@ -205,7 +211,7 @@ public:
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
 
   // TODO: update to volume based average
-  virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
+  virtual Real rho_edge() override { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
 };
 
 /**
@@ -235,10 +241,11 @@ public:
   virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
 
   virtual void updateGhostPressure(Real p_ghost) { _p_ghost = p_ghost; }
-  virtual Real computeDirichletBCResidual() { return _v - _v_bc; }
+  virtual void applyDirichletBC(Real & res) override { res = _v - _v_bc.value(_sim.time(), Point()); }
 
 protected:
-  Real _v_bc, _T_bc;
+  const Function & _v_bc;
+  const Function & _T_bc;
   Real _p_ghost;
 };
 
@@ -253,11 +260,30 @@ public:
   vBCEdgeInlet(const InputParameters & parameters);
   virtual ~vBCEdgeInlet() {}
 
-  virtual Real T_edge() override { return (_v_bc > 0.0) ? _T_bc : _e_cell->T(); }
-  virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rho(); }
-  virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc) : _v_bc * _e_cell->rhoh(); }
+  virtual Real T_edge() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? T_bc : _e_cell->T();
+  }
+  virtual Real mass_flux() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? v_bc * _eos->rho_from_p_T(_p_ghost, T_bc) : v_bc * _e_cell->rho();
+  }
+  virtual Real enthalpy_flux() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? v_bc * _eos->rho_from_p_T(_p_ghost, T_bc) * _eos->h_from_p_T(_p_ghost, T_bc) : v_bc * _e_cell->rhoh();
+  }
 
-  virtual Real dv_dx() override { return (_v_bc > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
+  virtual Real dv_dx() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL();
+  }
   virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
 
   virtual Real rho_edge() final { return _e_cell->rho(); }
@@ -273,46 +299,64 @@ public:
   vBCEdgeOutlet(const InputParameters & parameters);
   virtual ~vBCEdgeOutlet() {}
 
-  virtual Real T_edge() override { return (_v_bc > 0.0) ? _w_cell->T() : _T_bc; }
-  virtual Real mass_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rho() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc); }
-  virtual Real enthalpy_flux() override { return (_v_bc > 0.0) ? _v_bc * _w_cell->rhoh() : _v_bc * _eos->rho_from_p_T(_p_ghost, _T_bc) * _eos->h_from_p_T(_p_ghost, _T_bc); }
+  virtual Real T_edge() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? _w_cell->T() : T_bc;
+  }
+  virtual Real mass_flux() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? v_bc * _w_cell->rho() : v_bc * _eos->rho_from_p_T(_p_ghost, T_bc);
+  }
+  virtual Real enthalpy_flux() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    Real T_bc = _T_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? v_bc * _w_cell->rhoh() : v_bc * _eos->rho_from_p_T(_p_ghost, T_bc) * _eos->h_from_p_T(_p_ghost, T_bc);
+  }
   //virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
-  virtual Real dv_dx() override { return (_v_bc > 0.0) ? (_v_bc - _w_edge->v() / _w_cell->dL()) : 0.0; }
+  virtual Real dv_dx() override
+  {
+    Real v_bc = _v_bc.value(_sim.time(), Point());
+    return (v_bc > 0.0) ? (v_bc - _w_edge->v() / _w_cell->dL()) : 0.0;
+  }
   virtual Real dp_dx() override { return (_p_ghost - _w_cell->p()) / _dL_edge; }
 
   virtual Real rho_edge() final { return _w_cell->rho(); }
 };
 
 /**
- * snjShadowEdge is a very special type of vBCEdge.
+ * snjShadowEdge is a very special type of Edge.
  * When two pipes are connected with a SingleJunction (snjEdge), there are two boundary edges
  * overlapping. One of the two overlapping edges is the snjEdge, which handles the real connections,
  * computations, etc. There is therefore a redundant edge, which you cannot and should not handle
  * the connections, otherwise the connected cells got confused who they are really talking to. Thus
  * the snjShadowEdge design, which just mimics what the 'real' edge does.
  */
-class snjShadowEdge : public vBCEdge
+class snjShadowEdge : public EdgeBase
 {
 public:
-  snjShadowEdge(const InputParameters & parameters) : vBCEdge(parameters),
+  snjShadowEdge(const InputParameters & parameters) : EdgeBase(parameters),
   _real_edge(_pars.get<snjEdge*>("real_edge"))
   {}
   virtual ~snjShadowEdge() {}
 
   // a shadow edge mimics what the 'real' edge does
-  virtual Real T_edge() override { return _real_edge->T_edge(); }
-  virtual Real mass_flux() override { return _real_edge->mass_flux(); }
-  virtual Real enthalpy_flux() override { return _real_edge->enthalpy_flux(); }
-  virtual Real dv_dx() override { return _real_edge->dv_dx(); };
-  virtual Real dp_dx() override { return _real_edge->dp_dx(); }
-  virtual Real rho_edge() final { return _real_edge->rho_edge(); }
-
-  virtual void updateGhostPressure(Real /*p_ghost*/) override { /* nothing to do */ }
+  virtual Real T_edge() override final { return _real_edge->T_edge(); }
+  virtual Real mass_flux() override final { return _real_edge->mass_flux(); }
+  virtual Real enthalpy_flux() override final { return _real_edge->enthalpy_flux(); }
+  virtual Real dv_dt(Real) override final { return 0.0; }
+  virtual Real dv_dx() override final { return _real_edge->dv_dx(); }
+  virtual Real dp_dx() override final { return _real_edge->dp_dx(); }
+  virtual Real rho_edge() override final { return _real_edge->rho_edge(); }
 
   // Key implementation: shadow edge has the same velocity as the real edge
-  virtual Real computeDirichletBCResidual() override { return _v - _real_edge->v(); }
+  virtual void applyDirichletBC(Real & res) override final { res = _v - _real_edge->v(); }
 
-  virtual void setExtendedNeighborEdges() override
+  virtual void setExtendedNeighborEdges() override final
   {
     // shadow edge has no connected cells but follow the real edge
     _connected_DOFs.insert(_vDOF);

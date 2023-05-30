@@ -2,6 +2,7 @@
 
 CellBase::CellBase(const InputParameters & parameters) :
   _pars(parameters),
+  _sim(*_pars.get<DelPhiSimulation *>("_sim")),
   _name(_pars.get<std::string>("name")),
   _dL_cell(_pars.get<Real>("dL")),
   _eos(_pars.get<const SinglePhaseFluidProperties *>("eos"))
@@ -125,6 +126,7 @@ BranchCell::setExtendedNeighborCells()
 
 EdgeBase::EdgeBase(const InputParameters & parameters) :
   _pars(parameters),
+  _sim(*_pars.get<DelPhiSimulation *>("_sim")),
   _name(_pars.get<std::string>("name")),
   _dL_edge(0),
   _eos(_pars.get<const SinglePhaseFluidProperties *>("eos")),
@@ -199,8 +201,8 @@ IntEdge::dv_dx()
 
 vBCEdge::vBCEdge(const InputParameters & parameters) :
   EdgeBase(parameters),
-  _v_bc(_pars.get<Real>("v_bc")),
-  _T_bc(_pars.get<Real>("T_bc"))
+  _v_bc(_sim.getFunction(_pars.get<FunctionName>("v_bc"))),
+  _T_bc(_sim.getFunction(_pars.get<FunctionName>("T_bc")))
 {
 }
 
