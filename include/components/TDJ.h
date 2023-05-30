@@ -10,7 +10,7 @@ public:
   TDJ(const InputParameters & parameters);
   virtual ~TDJ() {}
 
-  virtual void addExternalVariables() override;
+  virtual void addPhysicalModel() override;
 
 protected:
   /// Name of the connecting component boundaries

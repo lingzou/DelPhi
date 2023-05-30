@@ -88,27 +88,8 @@ DelPhiSimulation::addExternalVariables()
   // We may need find a better plance (function name) for this operation
   Moose::PetscSupport::petscSetOptions(*this);
 
-  // Let each component add their variables info, there is an order here
-  for (auto & comp_1d : _components_1d)
-  {
-    comp_1d->setDOFoffset(_n_DOFs);
-    comp_1d->addExternalVariables();
-    _n_DOFs += comp_1d->getNDOF();
-  }
-  for (auto & comp_0d : _components_0d)
-  {
-    comp_0d->setDOFoffset(_n_DOFs);
-    comp_0d->addExternalVariables();
-    _n_DOFs += comp_0d->getNDOF();
-  }
-
-  // Now the system is ready for preparing extended connections
   for (auto & it : _comp_by_name)
-    it.second->setExtendedNeighbors();
-
-  _p_PETScApp->n_dofs = _n_DOFs;
-  _p_PETScApp->setupPETScWorkSpace();
-  _p_PETScApp->setupPETScIC();
+    it.second->addExternalVariables();
 
   // After collecting all variables info, let FEProblemBase add them
   for (auto & var : _vars)
@@ -125,6 +106,32 @@ DelPhiSimulation::addExternalVariables()
     var_params.set<std::vector<SubdomainName>>("block") = subdomains;
     FEProblemBase::addAuxVariable("MooseVariable", name, var_params);
   }
+}
+
+void
+DelPhiSimulation::addPhysicalModel()
+{
+  // Let each component add their variables info, there is an order here
+  for (auto & comp_1d : _components_1d)
+  {
+    comp_1d->setDOFoffset(_n_DOFs);
+    comp_1d->addPhysicalModel();
+    _n_DOFs += comp_1d->getNDOF();
+  }
+  for (auto & comp_0d : _components_0d)
+  {
+    comp_0d->setDOFoffset(_n_DOFs);
+    comp_0d->addPhysicalModel();
+    _n_DOFs += comp_0d->getNDOF();
+  }
+
+  // Now the system is ready for preparing extended connections
+  for (auto & it : _comp_by_name)
+    it.second->setExtendedNeighbors();
+
+  _p_PETScApp->n_dofs = _n_DOFs;
+  _p_PETScApp->setupPETScWorkSpace();
+  _p_PETScApp->setupPETScIC();
 }
 
 const SinglePhaseFluidProperties *

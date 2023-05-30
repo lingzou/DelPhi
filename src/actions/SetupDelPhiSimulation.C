@@ -2,7 +2,7 @@
 
 registerMooseAction("delphiApp", SetupDelPhiSimulation, "init_delphi_simulation");
 registerMooseAction("delphiApp", SetupDelPhiSimulation, "build_mesh");
-registerMooseAction("delphiApp", SetupDelPhiSimulation, "add_delphi_variables");
+registerMooseAction("delphiApp", SetupDelPhiSimulation, "add_physical_model");
 //registerMooseAction("delphiApp", SetupDelPhiSimulation, "setup_delphi_ICs");
 
 InputParameters
@@ -33,10 +33,10 @@ SetupDelPhiSimulation::act()
     sim_ptr->buildMesh();
     Moose::out << "OK" << std::endl;
   }
-  else if (_current_task == "add_delphi_variables")
+  else if (_current_task == "add_physical_model")
   {
-    Moose::out << "Add Variables... ";
-    // sim_ptr->addExternalVariables();
+    Moose::out << "Add physical model... ";
+    sim_ptr->addPhysicalModel();
     Moose::out << "OK" << std::endl;
   }
   /*

@@ -10,7 +10,7 @@ public:
   TDV(const InputParameters & parameters);
   virtual ~TDV() {}
 
-  virtual void addExternalVariables() override;
+  virtual void addPhysicalModel() override;
 
 protected:
   /// Name of the connecting component boundaries

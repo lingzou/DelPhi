@@ -18,6 +18,9 @@ public:
   virtual void addExternalVariables()
   { /*not all components have variables*/
   }
+  virtual void addPhysicalModel()
+  { /*not all components need this step*/
+  }
   virtual void setExtendedNeighbors()
   {
   }

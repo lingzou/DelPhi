@@ -10,7 +10,7 @@ public:
   SingleJunction(const InputParameters & parameters);
   virtual ~SingleJunction() {}
 
-  virtual void addExternalVariables() override;
+  virtual void addPhysicalModel() override;
 
 protected:
   /// Name of the connecting component boundaries

@@ -24,7 +24,7 @@ TDJ::TDJ(const InputParameters & parameters)
 }
 
 void
-TDJ::addExternalVariables()
+TDJ::addPhysicalModel()
 {
   // handle eos first
   _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));

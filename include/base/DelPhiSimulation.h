@@ -26,6 +26,7 @@ public:
 
   virtual void initSimulation();
   virtual void buildMesh();
+  virtual void addPhysicalModel();
 
   // Residual functions - related to PETSc
   virtual void setupPETScIC(double * u);

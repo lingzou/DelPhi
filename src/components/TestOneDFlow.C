@@ -81,7 +81,7 @@ TestOneDFlow::buildMesh()
 }
 
 void
-TestOneDFlow::addExternalVariables()
+TestOneDFlow::addPhysicalModel()
 {
   _n_DOFs = (_n_elem) + (_n_elem) + (_n_elem + 1); // p + T + v
 
@@ -112,7 +112,11 @@ TestOneDFlow::addExternalVariables()
     _edges[i] = new IntEdge(pars);
     _edges[i]->setDOF(_DOF_offset + 3 * i);
   }
+}
 
+void
+TestOneDFlow::addExternalVariables()
+{
   _sim.addMooseAuxVar("p", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("T", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("rho", FEType(CONSTANT, MONOMIAL), {_subdomain_name});

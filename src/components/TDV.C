@@ -24,7 +24,7 @@ TDV::TDV(const InputParameters & parameters)
 }
 
 void
-TDV::addExternalVariables()
+TDV::addPhysicalModel()
 {
   // handle eos first
   _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));

@@ -26,7 +26,7 @@ SingleJunction::SingleJunction(const InputParameters & parameters)
 }
 
 void
-SingleJunction::addExternalVariables()
+SingleJunction::addPhysicalModel()
 {
   // handle eos first
   _eos = _sim.getSinglePhaseEOS(getParam<UserObjectName>("eos"));

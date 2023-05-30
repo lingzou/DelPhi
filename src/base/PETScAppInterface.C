@@ -60,14 +60,12 @@ void
 PETScApp::backupSolution()
 {
   VecCopy(u, u_backup);
-  std::cerr << "solution is backed up.\n";
 }
 
 void
 PETScApp::restoreSolutionFromBackup()
 {
   VecCopy(u_backup, u);
-  std::cerr << "solution is restored from backup.\n";
 }
 
 void

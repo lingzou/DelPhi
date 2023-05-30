@@ -38,7 +38,7 @@ VolumeBranch::setExtendedNeighbors()
 }
 
 void
-VolumeBranch::addExternalVariables()
+VolumeBranch::addPhysicalModel()
 {
   _n_DOFs = 2; // p and T of this branch
 

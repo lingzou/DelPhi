@@ -12,6 +12,7 @@ public:
 
   virtual void buildMesh() override;
   virtual void addExternalVariables() override;
+  virtual void addPhysicalModel() override;
   virtual void setExtendedNeighbors() override;
   virtual void setupIC(double * u) override;
   virtual void onTimestepBegin() override;
