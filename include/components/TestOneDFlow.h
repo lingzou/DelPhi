@@ -20,6 +20,7 @@ public:
 
   // Residual-related functions
   virtual void updateSolution(double * u) override;
+  virtual void computeHelperVariables() override;
   virtual void computeTranRes(double * r) override;
   virtual void computeSpatialRes(double * r) override;
 

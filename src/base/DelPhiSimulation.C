@@ -193,6 +193,13 @@ DelPhiSimulation::setupPETScIC(double * u)
 }
 
 void
+DelPhiSimulation::computeHelperVariables()
+{
+  for (auto & it : _comp_by_name)
+    it.second->computeHelperVariables();
+}
+
+void
 DelPhiSimulation::updateSolutions(double * u)
 {
   for (auto & it : _comp_by_name)

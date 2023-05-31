@@ -213,6 +213,13 @@ TestOneDFlow::computeTranRes(double * res)
 }
 
 void
+TestOneDFlow::computeHelperVariables()
+{
+  for(auto& edge : _edges)
+    edge->computeFluxes();
+}
+
+void
 TestOneDFlow::computeSpatialRes(double * res)
 {
   // Momentum equations RHS
