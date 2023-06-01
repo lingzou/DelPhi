@@ -50,6 +50,15 @@ public:
   virtual Real rho_o()  const final { return _rho_o;  }
   virtual Real h_o()    const final { return _h_o;    }
   virtual Real rhoh_o() const final { return _rho_o * _h_o; }
+  // high-order data access
+  virtual Real T_w() const final { return _T_w; }
+  virtual Real T_e() const final { return _T_e; }
+  virtual Real rho_w() const final { return _rho_w; }
+  virtual Real rho_e() const final { return _rho_e; }
+  virtual Real h_w() const final { return _h_w; }
+  virtual Real h_e() const final { return _h_e; }
+  virtual Real rhoh_w() const final { return _rho_w * _h_w; }
+  virtual Real rhoh_e() const final { return _rho_e * _h_e; }
 
   // Residual related functions
   virtual void setDOF(unsigned pDOF, unsigned TDOF) final { _pDOF = pDOF; _TDOF = TDOF; }
@@ -76,6 +85,11 @@ protected:
   Real _T, _T_o;
   Real _rho, _rho_o;
   Real _h, _h_o;
+  // high-order data
+  Real _p_e, _p_w;
+  Real _T_e, _T_w;
+  Real _rho_e, _rho_w;
+  Real _h_e, _h_w;
 
   unsigned _pDOF, _TDOF;
 
@@ -213,15 +227,15 @@ public:
   {
     if (_v > 0.0)
     {
-      _T_edge = _w_cell->T();
-      _mass_flux = _v * _w_cell->rho();
-      _enthalpy_flux = _v * _w_cell->rhoh();
+      _T_edge = _w_cell->T_e();
+      _mass_flux = _v * _w_cell->rho_e();
+      _enthalpy_flux = _v * _w_cell->rhoh_e();
     }
     else
     {
-      _T_edge = _e_cell->T();
-      _mass_flux = _v * _e_cell->rho();
-      _enthalpy_flux = _v * _e_cell->rhoh();
+      _T_edge = _e_cell->T_w();
+      _mass_flux = _v * _e_cell->rho_w();
+      _enthalpy_flux = _v * _e_cell->rhoh_w();
     }
   }
 
@@ -294,9 +308,9 @@ public:
     }
     else
     {
-      _T_edge = _e_cell->T();
-      _mass_flux = v_bc * _e_cell->rho();
-      _enthalpy_flux = v_bc * _e_cell->rhoh();
+      _T_edge = _e_cell->T_w();
+      _mass_flux = v_bc * _e_cell->rho_w();
+      _enthalpy_flux = v_bc * _e_cell->rhoh_w();
     }
   }
 
@@ -329,9 +343,9 @@ public:
 
     if (v_bc > 0.0)
     {
-      _T_edge = _w_cell->T();
-      _mass_flux = v_bc * _w_cell->rho();
-      _enthalpy_flux = v_bc * _w_cell->rhoh();
+      _T_edge = _w_cell->T_e();
+      _mass_flux = v_bc * _w_cell->rho_e();
+      _enthalpy_flux = v_bc * _w_cell->rhoh_e();
     }
     else
     {
@@ -430,9 +444,9 @@ public:
     }
     else
     {
-      _T_edge = _e_cell->T();
-      _mass_flux = _v * _e_cell->rho();
-      _enthalpy_flux = _v * _e_cell->rhoh();
+      _T_edge = _e_cell->T_w();
+      _mass_flux = _v * _e_cell->rho_w();
+      _enthalpy_flux = _v * _e_cell->rhoh_w();
     }
   }
 
@@ -458,9 +472,9 @@ public:
 
     if (_v > 0.0)
     {
-      _T_edge = _w_cell->T();
-      _mass_flux = _v * _w_cell->rho();
-      _enthalpy_flux = _v * _w_cell->rhoh();
+      _T_edge = _w_cell->T_e();
+      _mass_flux = _v * _w_cell->rho_e();
+      _enthalpy_flux = _v * _w_cell->rhoh_e();
     }
     else
     {
@@ -490,15 +504,15 @@ public:
   {
     if (_v > 0.0)
     {
-      _T_edge = _w_cell->T();
-      _mass_flux = _v * _w_cell->rho();
-      _enthalpy_flux = _v * _w_cell->rhoh();
+      _T_edge = _w_cell->T_e();
+      _mass_flux = _v * _w_cell->rho_e();
+      _enthalpy_flux = _v * _w_cell->rhoh_e();
     }
     else
     {
-      _T_edge = _e_cell->T();
-      _mass_flux = _v * _e_cell->rho();
-      _enthalpy_flux = _v * _e_cell->rhoh();
+      _T_edge = _e_cell->T_w();
+      _mass_flux = _v * _e_cell->rho_w();
+      _enthalpy_flux = _v * _e_cell->rhoh_w();
     }
   }
 
@@ -524,15 +538,15 @@ public:
   {
     if (_v > 0.0)
     {
-      _T_edge = _w_cell->T();
-      _mass_flux = _v * _w_cell->rho();
-      _enthalpy_flux = _v * _w_cell->rhoh();
+      _T_edge = _w_cell->T_e();
+      _mass_flux = _v * _w_cell->rho_e();
+      _enthalpy_flux = _v * _w_cell->rhoh_e();
     }
     else
     {
-      _T_edge = _e_cell->T();
-      _mass_flux = _v * _e_cell->rho();
-      _enthalpy_flux = _v * _e_cell->rhoh();
+      _T_edge = _e_cell->T_w();
+      _mass_flux = _v * _e_cell->rho_w();
+      _enthalpy_flux = _v * _e_cell->rhoh_w();
     }
   }
 

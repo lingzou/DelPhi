@@ -25,8 +25,13 @@ CellBase::updateSolution(Real p, Real T)
 {
   _p = p;
   _T = T;
+  _p_w = _p_e = p;
+  _T_w = _T_e = T;
+
   _rho = _eos->rho_from_p_T(p, T);
   _h = _eos->h_from_p_T(p, T);
+  _rho_w = _rho_e = _rho;
+  _h_w = _h_e = _h;
 }
 
 void
