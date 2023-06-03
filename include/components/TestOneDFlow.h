@@ -20,6 +20,7 @@ public:
 
   // Residual-related functions
   virtual void updateSolution(double * u) override;
+  virtual void highOrderReconstruction() override;
   virtual void computeHelperVariables() override;
   virtual void computeTranRes(double * r) override;
   virtual void computeSpatialRes(double * r) override;
@@ -36,6 +37,8 @@ public:
   virtual void writeTextOutput() override;
 
 protected:
+  unsigned _order;
+
   Real _length;
   unsigned _n_elem;
   Real _dL;

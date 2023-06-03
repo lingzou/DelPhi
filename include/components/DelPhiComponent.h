@@ -42,8 +42,11 @@ public:
   virtual void updateSolution(double * /*u*/)
   { /*not all components have variables*/
   }
+  virtual void highOrderReconstruction()
+  { /* not all components have to perform high order reconstruction*/
+  }
   virtual void computeHelperVariables()
-  { /* not all components have helper variables*/
+  {
   }
   virtual void computeTranRes(double * /*r*/)
   { /*not all components have residuals*/

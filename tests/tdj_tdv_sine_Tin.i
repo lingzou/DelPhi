@@ -30,6 +30,7 @@
     type = TestOneDFlow
     position = '0 0 0'
     orientation = '0 0 1'
+    order = 2
     n_elems = 40
     length = 1.0
     eos = eos
@@ -55,7 +56,7 @@
   nl_rel_tol = 1
   l_tol = 1
   start_time = 0.0
-  end_time = 5
+  end_time = 2
   dt = 0.1
   dtmin = 0.001
 

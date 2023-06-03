@@ -56,4 +56,9 @@
     input = 'two_in_one_out.i'
     exodiff = 'two_in_one_out_out.e'
   []
+  [tdj_tdv_sine_Tin]
+    type = 'Exodiff'
+    input = 'tdj_tdv_sine_Tin.i'
+    exodiff = 'tdj_tdv_sine_Tin_out.e'
+  []
 []

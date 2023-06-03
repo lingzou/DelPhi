@@ -131,6 +131,8 @@ TestComponent::onTimestepEnd()
     dof = _elems[i]->dof_number(T_ana.sys().number(), T_ana.number(), 0);
     T_ana_sln.set(dof, sin(M_PI / _length * (i + 0.5) * _dL));
   }
+  T_sln.close();
+  T_ana_sln.close();
 }
 
 void

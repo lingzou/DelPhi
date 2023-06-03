@@ -191,6 +191,7 @@ snesFormFunction(SNES /*snes*/, Vec u, Vec f, void * appCtx)
 
   // use the most updated solution vector to update solution, to compute RHS and transient residuals
   petscApp->p_sim->updateSolutions(uu);
+  petscApp->p_sim->highOrderReconstruction();
   petscApp->p_sim->computeHelperVariables();
   petscApp->p_sim->computeTranRes(res_tran);
   petscApp->p_sim->computeSpatialRes(res_spatial);

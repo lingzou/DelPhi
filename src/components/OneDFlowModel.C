@@ -52,6 +52,41 @@ OneDCell::OneDCell(const InputParameters & parameters) :
 {
 }
 
+void
+OneDCell::linearReconstruction(Real p_W, Real T_W, Real p_E, Real T_E)
+{
+  // Reference:
+  // [1] Berger, M., Aftosmis, M.J., Murman, S.M., 2005. Analysis of slope limiters on irreg- ular grids.
+  //     In: AIAA Paper 2005-0490, 43rd AIAA Aerospace Sciences Meeting, Jan. 10e13, Reno, NV, 2005.
+
+  // pressure reconstruction
+  if ((p_E - _p)*(_p - p_W) > 0.0)      // _p is in between p_W and p_E, i.e., not a local extremum
+    if (std::fabs(p_E - p_W) > 1.e-10)  // The difference is large enough, so reconstruction makes sense, and that no divided-by-zero
+    {
+      Real f = (_p - p_W) / (p_E - p_W);
+      Real wf = 2.0 * f * (1.0 - f) / ((1.0 - f) * (1.0 - f) + f * f);   // Eqn. (10) of Ref. [1]
+
+      _p_w = _p - 0.25 * wf * (p_E - p_W);   // Eqn. (5) of Ref. [1]
+      _p_e = _p + 0.25 * wf * (p_E - p_W);
+    }
+
+  // repeat for temperature
+  if ((T_E - _T)*(_T - T_W) > 0.0)
+    if (std::fabs(T_E - T_W) > 1.e-10)
+    {
+      Real f = (_T - T_W) / (T_E - T_W);
+      Real wf = 2.0 * f * (1.0 - f) / ((1.0 - f) * (1.0 - f) + f * f);
+
+      _T_w = _T - 0.25 * wf * (T_E - T_W);
+      _T_e = _T + 0.25 * wf * (T_E - T_W);
+    }
+
+  _rho_w = _eos->rho_from_p_T(_p_w, _T_w);
+  _rho_e = _eos->rho_from_p_T(_p_e, _T_e);
+  _h_w = _eos->h_from_p_T(_p_w, _T_w);
+  _h_e = _eos->h_from_p_T(_p_e, _T_e);
+}
+
 EdgeBase *
 OneDCell::getOtherSideEdge(EdgeBase * edge)
 {
@@ -205,7 +240,7 @@ IntEdge::dv_dx()
 }
 
 vBCEdge::vBCEdge(const InputParameters & parameters) :
-  EdgeBase(parameters),
+  boundaryEdge(parameters),
   _v_bc(_sim.getFunction(_pars.get<FunctionName>("v_bc"))),
   _T_bc(_sim.getFunction(_pars.get<FunctionName>("T_bc")))
 {
@@ -242,7 +277,7 @@ vBCEdgeOutlet::vBCEdgeOutlet(const InputParameters & parameters) :
 }
 
 pBCEdge::pBCEdge(const InputParameters & parameters) :
-  EdgeBase(parameters),
+  boundaryEdge(parameters),
   _p_bc(_pars.get<Real>("p_bc")),
   _T_bc(_pars.get<Real>("T_bc"))
 {

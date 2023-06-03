@@ -115,8 +115,12 @@ public:
   virtual void setEastEdge(EdgeBase * e_edge) { _e_edge = e_edge; }
   virtual EdgeBase * wEdge() const { return _w_edge; }
   virtual EdgeBase * eEdge() const { return _e_edge; }
+  virtual CellBase * wCell() const { return _w_cell; }
+  virtual CellBase * eCell() const { return _e_cell; }
   virtual EdgeBase * getOtherSideEdge(EdgeBase * edge) override;
   virtual void setExtendedNeighborCells() override;
+
+  virtual void linearReconstruction(Real p_W, Real T_W, Real p_E, Real T_E);
 
 protected:
   EdgeBase * _w_edge;
@@ -260,17 +264,27 @@ public:
   virtual ~snjEdge() {}
 };
 
+class boundaryEdge : public EdgeBase
+{
+public:
+  boundaryEdge(const InputParameters & parameters) : EdgeBase(parameters) {}
+  virtual ~boundaryEdge() {}
+
+  virtual Real T_bc() = 0;
+};
+
 /**
  * vBCEdge derives from EdgeBase, and serves as the base class for velocity boundary type of
  * implementation. For velocity boundary, v_bc and T_bc are required, while pressure is a projected
  * value from interior domains.
  */
-class vBCEdge : public EdgeBase
+class vBCEdge : public boundaryEdge
 {
 public:
   vBCEdge(const InputParameters & parameters);
   virtual ~vBCEdge() {}
 
+  virtual Real T_bc() override { return _T_bc.value(_sim.time(), Point()); }
   virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
 
   virtual void updateGhostPressure(Real p_ghost) { _p_ghost = p_ghost; }
@@ -296,7 +310,7 @@ public:
   virtual void computeFluxes() override
   {
     Real v_bc = _v_bc.value(_sim.time(), Point());
-    Real T_bc = _T_bc.value(_sim.time(), Point());
+    Real T_bc = vBCEdge::T_bc();
     Real rho_bc = _eos->rho_from_p_T(_p_ghost, T_bc);
     Real h_bc = _eos->h_from_p_T(_p_ghost, T_bc);
 
@@ -337,7 +351,7 @@ public:
   virtual void computeFluxes() override
   {
     Real v_bc = _v_bc.value(_sim.time(), Point());
-    Real T_bc = _T_bc.value(_sim.time(), Point());
+    Real T_bc = vBCEdge::T_bc();
     Real rho_bc = _eos->rho_from_p_T(_p_ghost, T_bc);
     Real h_bc = _eos->h_from_p_T(_p_ghost, T_bc);
 
@@ -410,12 +424,13 @@ protected:
  * implementation. For pressure boundary, p_bc and T_bc are required, while velocity is part of the
  * results.
  */
-class pBCEdge : public EdgeBase
+class pBCEdge : public boundaryEdge
 {
 public:
   pBCEdge(const InputParameters & parameters);
   virtual ~pBCEdge() {}
 
+  virtual Real T_bc() override { return _T_bc; }
   virtual Real dv_dt(Real dt) override final { return (_v - _v_o) / dt; }
 
 protected:

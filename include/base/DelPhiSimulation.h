@@ -31,6 +31,7 @@ public:
   // Residual functions - related to PETSc
   virtual void setupPETScIC(double * u);
   virtual void updateSolutions(double * u);
+  virtual void highOrderReconstruction();
   virtual void computeHelperVariables();
   virtual void computeTranRes(double * r);
   virtual void computeSpatialRes(double * r);

@@ -200,6 +200,13 @@ DelPhiSimulation::computeHelperVariables()
 }
 
 void
+DelPhiSimulation::highOrderReconstruction()
+{
+  for (auto & it : _comp_by_name)
+    it.second->highOrderReconstruction();
+}
+
+void
 DelPhiSimulation::updateSolutions(double * u)
 {
   for (auto & it : _comp_by_name)

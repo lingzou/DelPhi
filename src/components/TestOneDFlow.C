@@ -10,6 +10,8 @@ TestOneDFlow::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
+  params.addParam<unsigned>("order", 1, "order for spatial discretization");
+
   params.addRequiredParam<std::vector<Real>>("position", "Origin (start) of the component");
   params.addRequiredParam<std::vector<Real>>("orientation", "Orientation vector of the component");
   params.addRequiredParam<Real>("length", "Length of the OneDComp");
@@ -30,6 +32,7 @@ TestOneDFlow::validParams()
 
 TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
   : OneDComponent(parameters),
+    _order(getParam<unsigned>("order")),
     _length(getParam<Real>("length")),
     _n_elem(getParam<unsigned>("n_elems")),
     _dL(_length / _n_elem),
@@ -197,6 +200,41 @@ TestOneDFlow::updateSolution(double * u)
 }
 
 void
+TestOneDFlow::highOrderReconstruction()
+{
+  if (_order == 1) return;
+  if (_n_elem < 2) return;
+
+  boundaryEdge * inletEdge = dynamic_cast<boundaryEdge*>(_edges.front());
+  Real T_in = 0.0;
+  if (inletEdge)
+    T_in = (inletEdge->v() > 0.0) ? inletEdge->T_bc() : _cells.front()->T();
+  else
+    T_in = _cells.front()->wCell()->T();
+
+  _cells[0]->linearReconstruction(_cells[0]->p(), T_in, _cells[1]->p(), _cells[1]->T());
+
+  boundaryEdge * outletEdge = dynamic_cast<boundaryEdge*>(_edges.back());
+  Real T_out = 0.0;
+  if (outletEdge)
+    T_out = (outletEdge->v() > 0.0) ? _cells.back()->T() : outletEdge->T_bc();
+  else
+    T_out = _cells.back()->eCell()->T();
+
+  _cells[_n_elem-1]->linearReconstruction(_cells[_n_elem-2]->p(), _cells[_n_elem-2]->T(), _cells[_n_elem-1]->p(), T_out);
+
+  for (unsigned i = 1; i < _n_elem - 1; i++)
+    _cells[i]->linearReconstruction(_cells[i-1]->p(), _cells[i-1]->T(), _cells[i+1]->p(), _cells[i+1]->T());
+}
+
+void
+TestOneDFlow::computeHelperVariables()
+{
+  for(auto& edge : _edges)
+    edge->computeFluxes();
+}
+
+void
 TestOneDFlow::computeTranRes(double * res)
 {
   unsigned idx = 0;
@@ -210,13 +248,6 @@ TestOneDFlow::computeTranRes(double * res)
       res[idx++] = (_cells[i]->rhoh() - _cells[i]->rhoh_o()) / _sim.dt() / _rhoh_ref;
     }
   }
-}
-
-void
-TestOneDFlow::computeHelperVariables()
-{
-  for(auto& edge : _edges)
-    edge->computeFluxes();
 }
 
 void
@@ -286,6 +317,10 @@ TestOneDFlow::onTimestepEnd()
     dof = _elems[i]->dof_number(h_var.sys().number(), h_var.number(), 0);
     h_sln.set(dof, _cells[i]->h());
   }
+  T_sln.close();
+  p_sln.close();
+  rho_sln.close();
+  h_sln.close();
 
   // output (node/edge value)
   MooseVariableFieldBase & v_var = _sim.getVariable(0, "v");
@@ -295,6 +330,7 @@ TestOneDFlow::onTimestepEnd()
     dof_id_type dof = _nodes[i]->dof_number(v_var.sys().number(), v_var.number(), 0);
     v_sln.set(dof, _edges[i]->v());
   }
+  v_sln.close();
 }
 
 void
