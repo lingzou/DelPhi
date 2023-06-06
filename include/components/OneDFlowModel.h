@@ -1,7 +1,10 @@
 #pragma once
 
+// moose include
 #include "SinglePhaseFluidProperties.h"
 #include "Function.h"
+
+#include "utils.h"
 
 class CellBase;
 class EdgeBase;
@@ -50,6 +53,24 @@ public:
   virtual Real rho_o()  const final { return _rho_o;  }
   virtual Real h_o()    const final { return _h_o;    }
   virtual Real rhoh_o() const final { return _rho_o * _h_o; }
+  virtual Real rho_oo()  const final { return _rho_oo;  }
+  virtual Real h_oo()    const final { return _h_oo;    }
+  virtual Real rhoh_oo() const final { return _rho_oo * _h_oo; }
+
+  virtual Real drho_dt() const final
+  {
+    if ((_sim.TS() == Moose::TI_IMPLICIT_EULER) || (_sim.timeStep() == 1)) // bdf1 or step 1 of bdf2
+      return (_rho - _rho_o) / _sim.dt();
+    else //bdf2 and step > 1
+      return DELPHI::BDF2_ddt(_rho, _rho_o, _rho_oo, _sim.dt(), _sim.dtOld());
+  }
+  virtual Real drhoh_dt() const final
+  {
+    if ((_sim.TS() == Moose::TI_IMPLICIT_EULER) || (_sim.timeStep() == 1)) // bdf1 or step 1 of bdf2
+      return (_rho * _h - _rho_o * _h_o) / _sim.dt();
+    else
+      return DELPHI::BDF2_ddt(_rho * _h, _rho_o * _h_o, _rho_oo * _h_oo, _sim.dt(), _sim.dtOld());
+  }
   // high-order data access
   virtual Real T_w() const final { return _T_w; }
   virtual Real T_e() const final { return _T_e; }
@@ -81,10 +102,11 @@ protected:
 
   Real _dL_cell;
 
-  Real _p, _p_o;
-  Real _T, _T_o;
-  Real _rho, _rho_o;
-  Real _h, _h_o;
+  // current value, old (o) value, old old (oo) value
+  Real _p, _p_o, _p_oo;
+  Real _T, _T_o, _T_oo;
+  Real _rho, _rho_o, _rho_oo;
+  Real _h, _h_o, _h_oo;
   // high-order data
   Real _p_e, _p_w;
   Real _T_e, _T_w;
@@ -169,12 +191,19 @@ public:
 
   virtual Real v()           const final { return _v; }
   virtual Real v_o()         const final { return _v_o; }
+  virtual Real v_oo()        const final { return _v_oo; }
 
   virtual void computeFluxes() = 0;
   virtual Real mass_flux() { return _mass_flux; }
   virtual Real enthalpy_flux() { return _enthalpy_flux; }
   virtual Real rho_edge() = 0;
-  virtual Real dv_dt(Real dt) = 0;
+  virtual Real dv_dt()
+  {
+    if ((_sim.TS() == Moose::TI_IMPLICIT_EULER) || (_sim.timeStep() == 1)) // bdf1 or step 1 of bdf2
+      return (_v - _v_o) / _sim.dt();
+    else //bdf2 and step > 1
+      return DELPHI::BDF2_ddt(_v, _v_o, _v_oo, _sim.dt(), _sim.dtOld());
+  }
   virtual Real dv_dx() = 0;
   virtual Real dp_dx() = 0;
   // only for output purpose
@@ -182,9 +211,9 @@ public:
 
   virtual void setDOF(unsigned vDOF) final { _vDOF = vDOF; }
   virtual unsigned vDOF() const final { return _vDOF; }
-  virtual void initialize(Real v)     final { _v = v; _v_o = v; }
+  virtual void initialize(Real v)     final { _v = v; _v_o = v; _v_oo = v; }
   virtual void updateSolution(Real v) final { _v = v; }
-  virtual void saveOldSlns()          final { _v_o = _v; }
+  virtual void saveOldSlns()          final { _v_oo = _v_o; _v_o = _v; }
   virtual void applyDirichletBC(Real & /*res*/) { /*not all edges has DirichletBC*/ }
 
   virtual CellBase * getOtherSideCell(CellBase * cell);
@@ -200,7 +229,7 @@ protected:
 
   Real _dL_edge;
 
-  Real _v, _v_o;
+  Real _v, _v_o, _v_oo;
   unsigned _vDOF;
 
   Real _T_edge; // the temperature used to compute enthalpy flux, also for output
@@ -243,7 +272,6 @@ public:
     }
   }
 
-  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
   virtual Real dv_dx() override;
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
 
@@ -285,7 +313,7 @@ public:
   virtual ~vBCEdge() {}
 
   virtual Real T_bc() override { return _T_bc.value(_sim.time(), Point()); }
-  virtual Real dv_dt(Real /*dt*/) override { return 0.0; }
+  virtual Real dv_dt() override { return 0.0; }
 
   virtual void updateGhostPressure(Real p_ghost) { _p_ghost = p_ghost; }
   virtual void applyDirichletBC(Real & res) override { res = _v - _v_bc.value(_sim.time(), Point()); }
@@ -400,7 +428,7 @@ public:
   virtual Real T_edge() override final { return _real_edge->T_edge(); }
   virtual Real mass_flux() override final { return _real_edge->mass_flux(); }
   virtual Real enthalpy_flux() override final { return _real_edge->enthalpy_flux(); }
-  virtual Real dv_dt(Real) override final { return 0.0; }
+  virtual Real dv_dt() override final { return 0.0; }
   virtual Real dv_dx() override final { return _real_edge->dv_dx(); }
   virtual Real dp_dx() override final { return _real_edge->dp_dx(); }
   virtual Real rho_edge() override final { return _real_edge->rho_edge(); }
@@ -431,7 +459,6 @@ public:
   virtual ~pBCEdge() {}
 
   virtual Real T_bc() override { return _T_bc; }
-  virtual Real dv_dt(Real dt) override final { return (_v - _v_o) / dt; }
 
 protected:
   Real _p_bc, _T_bc;
@@ -531,7 +558,6 @@ public:
     }
   }
 
-  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
   virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
 
@@ -565,7 +591,6 @@ public:
     }
   }
 
-  virtual Real dv_dt(Real dt) override { return (_v - _v_o) / dt; }
   virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
 

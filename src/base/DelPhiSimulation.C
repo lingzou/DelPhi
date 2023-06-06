@@ -1,4 +1,9 @@
+// libmesh include
 #include "libmesh/string_to_enum.h"
+
+// moose include
+#include "Executioner.h"
+#include "Transient.h"
 
 #include "DelPhiSimulation.h"
 #include "DelPhiComponent.h"
@@ -67,6 +72,17 @@ DelPhiSimulation::getComponentByName(const std::string & name)
 void
 DelPhiSimulation::initSimulation()
 {
+  // before going into solving the problem, we make sure that it is a 'transient' simulation
+  // using implicit-euler (BDF1) and bdf2
+  Executioner * exec = _app.getExecutioner();
+  if (dynamic_cast<Transient *>(exec) != NULL)
+  {
+    _ts = dynamic_cast<Transient *>(exec)->getTimeScheme();
+    if ((_ts != Moose::TI_IMPLICIT_EULER) && (_ts != Moose::TI_BDF2))
+      mooseError("Currently, only 'implicit-euler' and 'bdf2' schemes are supported.");
+  }
+  else
+    mooseError("Currently, only 'Transiet' simulations are supported.");
 }
 
 void

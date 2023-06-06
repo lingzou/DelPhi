@@ -130,8 +130,8 @@ VolumeBranch::updateSolution(double * u)
 void
 VolumeBranch::computeTranRes(double * res)
 {
-  res[0] = _vol * (_brh_cell->rho() - _brh_cell->rho_o()) / _sim.dt() / _rho_ref;
-  res[1] = _vol * (_brh_cell->rhoh() - _brh_cell->rhoh_o()) / _sim.dt() / _rhoh_ref;
+  res[0] = _vol * _brh_cell->drho_dt() / _rho_ref;
+  res[1] = _vol * _brh_cell->drhoh_dt() / _rhoh_ref;
 }
 
 void

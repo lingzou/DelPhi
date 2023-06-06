@@ -1,7 +1,6 @@
 #include "SystemBase.h" // for access solution
 #include "TestOneDFlow.h"
 #include "OneDFlowModel.h"
-//#include "SinglePhaseFluidProperties.h"
 
 registerMooseObject("delphiApp", TestOneDFlow);
 
@@ -125,6 +124,7 @@ TestOneDFlow::addExternalVariables()
   _sim.addMooseAuxVar("rho", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("enthalpy", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("v", FEType(FIRST, LAGRANGE), {_subdomain_name});
+  // _sim.addMooseAuxVar("T_edge", FEType(FIRST, LAGRANGE), {_subdomain_name});
 }
 
 void
@@ -240,12 +240,12 @@ TestOneDFlow::computeTranRes(double * res)
   unsigned idx = 0;
   for(unsigned i = 0; i < _n_elem + 1; i++)
   {
-    res[idx++] = _edges[i]->rho_edge() * _edges[i]->dv_dt(_sim.dt()) / _rho_ref;
+    res[idx++] = _edges[i]->rho_edge() * _edges[i]->dv_dt() / _rho_ref;
 
     if (i < _n_elem)
     {
-      res[idx++] = (_cells[i]->rho() - _cells[i]->rho_o()) / _sim.dt() / _rho_ref;
-      res[idx++] = (_cells[i]->rhoh() - _cells[i]->rhoh_o()) / _sim.dt() / _rhoh_ref;
+      res[idx++] = _cells[i]->drho_dt() / _rho_ref;
+      res[idx++] = _cells[i]->drhoh_dt() / _rhoh_ref;
     }
   }
 }
@@ -325,12 +325,18 @@ TestOneDFlow::onTimestepEnd()
   // output (node/edge value)
   MooseVariableFieldBase & v_var = _sim.getVariable(0, "v");
   NumericVector<Number> & v_sln = v_var.sys().solution();
+  // MooseVariableFieldBase & T_edge_var = _sim.getVariable(0, "T_edge");
+  // NumericVector<Number> & T_edge_sln = T_edge_var.sys().solution();
   for (unsigned i = 0; i < _nodes.size(); i++)
   {
     dof_id_type dof = _nodes[i]->dof_number(v_var.sys().number(), v_var.number(), 0);
     v_sln.set(dof, _edges[i]->v());
+
+    // dof = _nodes[i]->dof_number(T_edge_var.sys().number(), T_edge_var.number(), 0);
+    // T_edge_sln.set(dof, _edges[i]->T_edge());
   }
   v_sln.close();
+  // T_edge_sln.close();
 }
 
 void

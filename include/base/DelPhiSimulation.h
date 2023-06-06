@@ -48,7 +48,8 @@ public:
   virtual void addMooseAuxVar(const std::string & name,
                               const FEType & type,
                               const std::vector<SubdomainName> & subdomain_names);
-  // will work on MOOSE-stype output file later
+  virtual Moose::TimeIntegratorType TS() const { return _ts; }
+  // will work on MOOSE-style output file later
   virtual FILE * getTextOutputFile() { return _p_file; }
 
 protected:
@@ -66,6 +67,9 @@ protected:
 
 protected:
   DelPhiMesh & _delphi_mesh;
+
+  /// time integration scheme
+  Moose::TimeIntegratorType _ts;
 
   /// Map of components by their names, [name, comp_ptr]
   std::map<std::string, MooseSharedPointer<DelPhiComponent>> _comp_by_name;

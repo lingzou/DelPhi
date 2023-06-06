@@ -53,6 +53,7 @@
 
 [Executioner]
   type = Transient
+  scheme = bdf2
   nl_rel_tol = 1
   l_tol = 1
   start_time = 0.0

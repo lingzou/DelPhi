@@ -12,12 +12,16 @@ CellBase::CellBase(const InputParameters & parameters) :
 void
 CellBase::initialize(Real p, Real T)
 {
-  _p = p; _p_o = p;
-  _T = T; _T_o = T;
+  _p = p; _p_o = p; _p_oo = p;
+  _T = T; _T_o = T; _T_oo = T;
+
   _rho = _eos->rho_from_p_T(p, T);
   _rho_o = _rho;
+  _rho_oo = _rho;
+
   _h = _eos->h_from_p_T(p, T);
   _h_o = _h;
+  _h_oo = _h;
 }
 
 void
@@ -37,6 +41,11 @@ CellBase::updateSolution(Real p, Real T)
 void
 CellBase::saveOldSlns()
 {
+  _p_oo = _p_o;
+  _T_oo = _T_o;
+  _rho_oo = _rho_o;
+  _h_oo = _h_o;
+
   _p_o = _p;
   _T_o = _T;
   _rho_o = _rho;
