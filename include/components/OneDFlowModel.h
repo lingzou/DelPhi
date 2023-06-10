@@ -71,6 +71,12 @@ public:
     else
       return DELPHI::BDF2_ddt(_rho * _h, _rho_o * _h_o, _rho_oo * _h_oo, _sim.dt(), _sim.dtOld());
   }
+
+  virtual Real dp_friction()
+  { mooseError("dp_friction() is not expected"); return 0.0; }
+  virtual Real dp_gravity()
+  { mooseError("dp_gravity() is not expected"); return 0.0; }
+
   // high-order data access
   virtual Real T_w() const final { return _T_w; }
   virtual Real T_e() const final { return _T_e; }
@@ -89,6 +95,8 @@ public:
   virtual void initialize(Real p, Real T) final;
   virtual void updateSolution(Real p, Real T) final;
   virtual void saveOldSlns() final;
+
+  virtual void computeHelperVariables() {}
 
   virtual EdgeBase * getOtherSideEdge(EdgeBase * edge) = 0;
   virtual void setExtendedNeighborCells() = 0;
@@ -142,13 +150,25 @@ public:
   virtual EdgeBase * getOtherSideEdge(EdgeBase * edge) override;
   virtual void setExtendedNeighborCells() override;
 
+  virtual void computeHelperVariables() override;
   virtual void linearReconstruction(Real p_W, Real T_W, Real p_E, Real T_E);
+
+  virtual Real dp_friction() override { return _dp_friction; }
+  virtual Real dp_gravity() override { return _dp_gravity; }
 
 protected:
   EdgeBase * _w_edge;
   EdgeBase * _e_edge;
   CellBase * _w_cell;
   CellBase * _e_cell;
+
+  Real _dh;
+  DELPHI::WallFrictionModel _wf_option;
+  Real _f_const;
+  Real _Welander_constant;
+
+  Real _dp_friction;
+  Real _dp_gravity;
 };
 
 /**
@@ -206,6 +226,7 @@ public:
   }
   virtual Real dv_dx() = 0;
   virtual Real dp_dx() = 0;
+  virtual Real dp_dx_friction() = 0;
   // only for output purpose
   virtual Real T_edge() { return _T_edge; }
 
@@ -274,6 +295,10 @@ public:
 
   virtual Real dv_dx() override;
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx_friction() override
+  {
+    return 0.5 * (_e_cell->dp_friction() + _w_cell->dp_friction()) / _dL_edge;
+  }
 
   // TODO: update to volume based average
   virtual Real rho_edge() override { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
@@ -362,6 +387,7 @@ public:
     return (v_bc > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL();
   }
   virtual Real dp_dx() override { return (_e_cell->p() - _p_ghost) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _e_cell->dp_friction() / _dL_edge; }
 
   virtual Real rho_edge() final { return _e_cell->rho(); }
 };
@@ -403,6 +429,7 @@ public:
     return (v_bc > 0.0) ? (v_bc - _w_edge->v() / _w_cell->dL()) : 0.0;
   }
   virtual Real dp_dx() override { return (_p_ghost - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _w_cell->dp_friction() / _dL_edge; }
 
   virtual Real rho_edge() final { return _w_cell->rho(); }
 };
@@ -431,6 +458,7 @@ public:
   virtual Real dv_dt() override final { return 0.0; }
   virtual Real dv_dx() override final { return _real_edge->dv_dx(); }
   virtual Real dp_dx() override final { return _real_edge->dp_dx(); }
+  virtual Real dp_dx_friction() override { return _real_edge->dp_dx_friction(); }
   virtual Real rho_edge() override final { return _real_edge->rho_edge(); }
 
   // Key implementation: shadow edge has the same velocity as the real edge
@@ -494,6 +522,7 @@ public:
 
   virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
   virtual Real dp_dx() override { return (_e_cell->p() - _p_bc) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _e_cell->dp_friction() / _dL_edge; }
 
   virtual Real rho_edge() override final { return _e_cell->rho(); }
 };
@@ -528,6 +557,7 @@ public:
 
   virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
   virtual Real dp_dx() override { return (_p_bc - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _w_cell->dp_friction() / _dL_edge; }
 
   virtual Real rho_edge() override final { return _w_cell->rho(); }
 };
@@ -560,6 +590,7 @@ public:
 
   virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _e_cell->dp_friction() / _dL_edge; }
 
   // TODO: update to volume based average
   virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }
@@ -593,6 +624,7 @@ public:
 
   virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
   virtual Real dp_dx() override { return (_e_cell->p() - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx_friction() override { return 0.5 * _w_cell->dp_friction() / _dL_edge; }
 
   // TODO: update to volume based average
   virtual Real rho_edge() final { return 0.5 * (_w_cell->rho() + _e_cell->rho()); }

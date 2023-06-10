@@ -19,6 +19,21 @@ stringToEnum(const std::string & str)
   return INVALID;
 }
 
+template <>
+WallFrictionModel
+stringToEnum(const std::string & str)
+{
+  std::string str_upper(str);
+  std::transform(str_upper.begin(), str_upper.end(), str_upper.begin(), ::toupper);
+
+  if (str_upper == "CONST_FRICTION")  return CONST_FRICTION;
+  else if (str_upper == "WELANDER")  return WELANDER;
+  else mooseError("Unknown end type: " + str);
+
+  // should not reach here
+  return INVALID_WFMODEL;
+}
+
 void
 getConnection(const std::string & str, std::string & comp_name, EEndType & end_type)
 {

@@ -1,6 +1,7 @@
 #include "SystemBase.h" // for access solution
 #include "TestOneDFlow.h"
 #include "OneDFlowModel.h"
+#include "DelPhiTypes.h"
 
 registerMooseObject("delphiApp", TestOneDFlow);
 
@@ -23,7 +24,12 @@ TestOneDFlow::validParams()
 
   params.addRequiredParam<Real>("A", "Flow area");
   params.addRequiredParam<Real>("Dh", "Hydraulic diameter");
-  params.addParam<Real>("f", 0, "friction factor");
+
+  // wall friction input parameters
+  params.addParam<Real>("f", "friction factor");
+  params.addParam<std::string>("WF_user_option", "User-provided wall friction option");
+  params.addParam<Real>("Welander_constant", "Welander constant value used in Welander cases");
+
   params.addParam<Real>("heat_source", 0, "volumetric heat source");
 
   return params;
@@ -40,6 +46,8 @@ TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
     _f(getParam<Real>("f")),
     _qv(getParam<Real>("heat_source"))
 {
+  if (isParamValid("f") && isParamValid("WF_user_option"))
+    mooseError("'f' and 'WF_user_option' cannot be both specified.");
 }
 
 TestOneDFlow::~TestOneDFlow()
@@ -97,7 +105,22 @@ TestOneDFlow::addPhysicalModel()
     pars.set<DelPhiSimulation *>("_sim") = &_sim;
     pars.set<std::string>("name") = name() + ":cell_" + std::to_string(i);
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
+    pars.set<Real>("Dh") = getParam<Real>("Dh");
     pars.set<Real>("dL") = _dL;
+    if (isParamValid("f"))
+    {
+      pars.set<DELPHI::WallFrictionModel>("WF_option") = DELPHI::CONST_FRICTION;
+      pars.set<Real>("f") = getParam<Real>("f");
+    }
+    else if (isParamValid("WF_user_option"))
+    {
+      DELPHI::WallFrictionModel wf_option = DELPHI::stringToEnum<DELPHI::WallFrictionModel>(getParam<std::string>("WF_user_option"));
+      pars.set<DELPHI::WallFrictionModel>("WF_option") = wf_option;
+      if (wf_option == DELPHI::WELANDER)
+        pars.set<Real>("Welander_constant") = getParam<Real>("Welander_constant");
+    }
+    else
+      mooseError("To be implemented");
     _cells[i] = new OneDCell(pars);
     _cells[i]->setDOF(_DOF_offset + 3 * i + 1, _DOF_offset + 3 * i + 2);
   }
@@ -232,6 +255,9 @@ TestOneDFlow::computeHelperVariables()
 {
   for(auto& edge : _edges)
     edge->computeFluxes();
+
+  for(auto& cell : _cells)
+    cell->computeHelperVariables();
 }
 
 void
@@ -261,8 +287,7 @@ TestOneDFlow::computeSpatialRes(double * res)
 
     Real dv_dx = _edges[i]->dv_dx();
     Real dp_dx = _edges[i]->dp_dx();
-    // friction term
-    Real fric = 0.5 * _f / _dh * rho_edge * v * std::fabs(v);
+    Real fric = _edges[i]->dp_dx_friction();
 
     // assemble spatial terms
     res[3*i] = (rho_edge * v * dv_dx + dp_dx + fric) / _rho_ref;

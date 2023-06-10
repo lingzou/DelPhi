@@ -57,8 +57,25 @@ OneDCell::OneDCell(const InputParameters & parameters) :
   _w_edge(NULL),
   _e_edge(NULL),
   _w_cell(NULL),
-  _e_cell(NULL)
+  _e_cell(NULL),
+  _dh(_pars.get<Real>("Dh")),
+  _wf_option(_pars.get<DELPHI::WallFrictionModel>("WF_option")),
+  _f_const(_pars.isParamValid("f") ? _pars.get<Real>("f") : 0.0),
+  _Welander_constant(_pars.isParamValid("Welander_constant") ? _pars.get<Real>("Welander_constant") : 0.0)
 {
+}
+
+void
+OneDCell::computeHelperVariables()
+{
+  Real v_avg = 0.5 * (_w_edge->v() + _e_edge->v());
+
+  if (_wf_option == DELPHI::CONST_FRICTION)
+    _dp_friction = 0.5 * _f_const * _dL_cell / _dh * _rho * v_avg * std::fabs(v_avg);
+  else if (_wf_option == DELPHI::WELANDER)
+    _dp_friction = _dL_cell * _Welander_constant * v_avg; // rho_0 * R * v
+  else
+    mooseError("Wall friction model does not exist.");
 }
 
 void
