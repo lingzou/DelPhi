@@ -61,4 +61,9 @@
     input = 'tdj_tdv_sine_Tin.i'
     exodiff = 'tdj_tdv_sine_Tin_out.e'
   []
+  [hydrostatic]
+    type = 'Exodiff'
+    input = 'hydrostatic.i'
+    exodiff = 'hydrostatic_out.e'
+  []
 []
