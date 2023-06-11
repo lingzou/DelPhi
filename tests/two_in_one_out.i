@@ -1,3 +1,7 @@
+[GlobalSimParameters]
+  gravity = '0 0 0'
+[]
+
 [FluidProperties]
   [eos]
     #type = FlibeFluidProperties

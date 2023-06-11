@@ -1,4 +1,7 @@
 ## Put two very different fluids in the same system, testing the numerical robustness
+[GlobalSimParameters]
+  gravity = '0 0 0'
+[]
 
 [FluidProperties]
   [helium]

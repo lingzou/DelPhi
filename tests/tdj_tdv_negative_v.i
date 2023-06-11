@@ -1,4 +1,7 @@
 ## Not the best physical setup, for testing numerical robustness
+[GlobalSimParameters]
+  gravity = '0 0 0'
+[]
 
 [FluidProperties]
   [eos]

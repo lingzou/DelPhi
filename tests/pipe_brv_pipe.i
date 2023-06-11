@@ -1,5 +1,8 @@
 # Physically, the setup of this problem is exactly the same as in the pipe_snj_pipe.i
 # and the results in pipes should be exactly the same, which indeed are.
+[GlobalSimParameters]
+  gravity = '0 0 0'
+[]
 
 [FluidProperties]
   [eos]

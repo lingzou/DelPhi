@@ -43,7 +43,6 @@ TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
     _dL(_length / _n_elem),
     _flow_area(getParam<Real>("A")),
     _dh(getParam<Real>("Dh")),
-    _f(getParam<Real>("f")),
     _qv(getParam<Real>("heat_source"))
 {
   if (isParamValid("f") && isParamValid("WF_user_option"))
@@ -64,7 +63,11 @@ TestOneDFlow::buildMesh()
 
   Point position = Point(pos[0], pos[1], pos[2]);
   RealVectorValue direction = VectorValue<Real>(dir[0], dir[1], dir[2]);
+  if (direction.norm() < 1e-16)
+    mooseError("'orientation' cannot be a zero vector.");
   direction = direction.unit();
+
+  _gL = direction * _sim.getParam<RealVectorValue>("gravity");
 
   _subdomain_id = getNextSubdomainId();
   _subdomain_name = Moose::stringify(_subdomain_id);
@@ -107,6 +110,7 @@ TestOneDFlow::addPhysicalModel()
     pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
     pars.set<Real>("Dh") = getParam<Real>("Dh");
     pars.set<Real>("dL") = _dL;
+    pars.set<Real>("gL") = _gL;
     if (isParamValid("f"))
     {
       pars.set<DELPHI::WallFrictionModel>("WF_option") = DELPHI::CONST_FRICTION;
@@ -288,9 +292,10 @@ TestOneDFlow::computeSpatialRes(double * res)
     Real dv_dx = _edges[i]->dv_dx();
     Real dp_dx = _edges[i]->dp_dx();
     Real fric = _edges[i]->dp_dx_friction();
+    Real gravity = _edges[i]->gravity();
 
     // assemble spatial terms
-    res[3*i] = (rho_edge * v * dv_dx + dp_dx + fric) / _rho_ref;
+    res[3*i] = (rho_edge * v * dv_dx + dp_dx + fric - gravity) / _rho_ref;
   }
 
   _edges.front()->applyDirichletBC(res[0]);

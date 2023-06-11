@@ -101,7 +101,7 @@ DelPhiSimulation::addExternalVariables()
   // FEProblemBase setup PETSc options in FEProblemBase::solve()
   // From experiments, it seems to be too late to do so in ExternalProblem::solve()
   // and this is the right place to setup PETSc options
-  // We may need find a better plance (function name) for this operation
+  // We may need find a better place (i.e., creating a new function) for this operation
   Moose::PetscSupport::petscSetOptions(*this);
 
   for (auto & it : _comp_by_name)
