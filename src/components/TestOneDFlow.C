@@ -30,6 +30,9 @@ TestOneDFlow::validParams()
   params.addParam<std::string>("WF_user_option", "User-provided wall friction option");
   params.addParam<Real>("Welander_constant", "Welander constant value used in Welander cases");
 
+  params.addParam<Real>("Tw", "A user-specified constant wall temperature");
+  params.addParam<Real>("Hw", 0, "A user-specified constant wall heat transfer coefficient");
+  params.addParam<Real>("HT_surface_area_density", 0, "A user-specified constant wall heat transfer area density");
   params.addParam<Real>("heat_source", 0, "volumetric heat source");
 
   return params;
@@ -43,7 +46,11 @@ TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
     _dL(_length / _n_elem),
     _flow_area(getParam<Real>("A")),
     _dh(getParam<Real>("Dh")),
-    _qv(getParam<Real>("heat_source"))
+    _qv(getParam<Real>("heat_source")),
+    _has_Tw(isParamValid("Tw")),
+    _Tw(_has_Tw ? getParam<Real>("Tw") : 0.0),
+    _hw(getParam<Real>("Hw")),
+    _aw(getParam<Real>("HT_surface_area_density"))
 {
   if (isParamValid("f") && isParamValid("WF_user_option"))
     mooseError("'f' and 'WF_user_option' cannot be both specified.");
@@ -234,22 +241,29 @@ TestOneDFlow::highOrderReconstruction()
 
   boundaryEdge * inletEdge = dynamic_cast<boundaryEdge*>(_edges.front());
   Real T_in = 0.0;
-  if (inletEdge)
+  Real p_in = 0.0;
+  if (inletEdge != NULL) // this is a boundary (connected to TDJ/TDV)
+  {
     T_in = (inletEdge->v() > 0.0) ? inletEdge->T_bc() : _cells.front()->T();
+    p_in = inletEdge->p_bc();
+    _cells[0]->linearReconstruction(p_in, T_in, _cells[1]->p(), _cells[1]->T());
+  }
   else
-    T_in = _cells.front()->wCell()->T();
-
-  _cells[0]->linearReconstruction(_cells[0]->p(), T_in, _cells[1]->p(), _cells[1]->T());
+    _cells[0]->linearReconstructionIrregularMesh();
 
   boundaryEdge * outletEdge = dynamic_cast<boundaryEdge*>(_edges.back());
   Real T_out = 0.0;
-  if (outletEdge)
+  Real p_out = 0.0;
+  if (outletEdge != NULL)
+  {
     T_out = (outletEdge->v() > 0.0) ? _cells.back()->T() : outletEdge->T_bc();
+    p_out = outletEdge->p_bc();
+    _cells[_n_elem-1]->linearReconstruction(_cells[_n_elem-2]->p(), _cells[_n_elem-2]->T(), p_out, T_out);
+  }
   else
-    T_out = _cells.back()->eCell()->T();
+    _cells.back()->linearReconstructionIrregularMesh();
 
-  _cells[_n_elem-1]->linearReconstruction(_cells[_n_elem-2]->p(), _cells[_n_elem-2]->T(), _cells[_n_elem-1]->p(), T_out);
-
+  // remaining interior OneDCells
   for (unsigned i = 1; i < _n_elem - 1; i++)
     _cells[i]->linearReconstruction(_cells[i-1]->p(), _cells[i-1]->T(), _cells[i+1]->p(), _cells[i+1]->T());
 }
@@ -308,7 +322,11 @@ TestOneDFlow::computeSpatialRes(double * res)
     EdgeBase * e_edge = _cells[i]->eEdge();
 
     res[3*i+1] = (e_edge->mass_flux() - w_edge->mass_flux()) / _dL / _rho_ref;
-    res[3*i+2] = ((e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - _qv) / _rhoh_ref; // 1e3 source term
+    Real res_energy = (e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - _qv;
+
+    if (_has_Tw)
+      res_energy -= _hw * _aw * (_Tw - _cells[i]->T());
+    res[3*i+2] = res_energy / _rhoh_ref;
   }
 }
 

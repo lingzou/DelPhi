@@ -152,6 +152,7 @@ public:
 
   virtual void computeHelperVariables() override;
   virtual void linearReconstruction(Real p_W, Real T_W, Real p_E, Real T_E);
+  virtual void linearReconstructionIrregularMesh();
 
   virtual Real dp_friction() override { return _dp_friction; }
   virtual Real dp_gravity() override { return _dp_gravity; }
@@ -330,7 +331,8 @@ public:
   boundaryEdge(const InputParameters & parameters) : EdgeBase(parameters) {}
   virtual ~boundaryEdge() {}
 
-  virtual Real T_bc() = 0;
+  virtual Real p_bc() = 0; // ghost p for velocity BC, real p for p BC
+  virtual Real T_bc() = 0; // real T BC
 };
 
 /**
@@ -344,6 +346,7 @@ public:
   vBCEdge(const InputParameters & parameters);
   virtual ~vBCEdge() {}
 
+  virtual Real p_bc() override { return _p_ghost; }
   virtual Real T_bc() override { return _T_bc.value(_sim.time(), Point()); }
   virtual Real dv_dt() override { return 0.0; }
 
@@ -496,10 +499,12 @@ public:
   pBCEdge(const InputParameters & parameters);
   virtual ~pBCEdge() {}
 
-  virtual Real T_bc() override { return _T_bc; }
+  virtual Real p_bc() override { return _p_bc.value(_sim.time(), Point()); }
+  virtual Real T_bc() override { return _T_bc.value(_sim.time(), Point()); }
 
 protected:
-  Real _p_bc, _T_bc;
+  const Function & _p_bc;
+  const Function & _T_bc;
 };
 
 /**
@@ -513,12 +518,14 @@ public:
 
   virtual void computeFluxes() override
   {
-    Real rho_bc = _eos->rho_from_p_T(_p_bc, _T_bc);
-    Real h_bc = _eos->h_from_p_T(_p_bc, _T_bc);
+    Real p_bc = pBCEdge::p_bc();
+    Real T_bc = pBCEdge::T_bc();
+    Real rho_bc = _eos->rho_from_p_T(p_bc, T_bc);
+    Real h_bc = _eos->h_from_p_T(p_bc, T_bc);
 
     if (_v > 0.0)
     {
-      _T_edge = _T_bc;
+      _T_edge = T_bc;
       _mass_flux = _v * rho_bc;
       _enthalpy_flux = _v * rho_bc * h_bc;
     }
@@ -531,7 +538,7 @@ public:
   }
 
   virtual Real dv_dx() override { return (_v > 0.0) ? 0.0 : (_e_edge->v() - _v) / _e_cell->dL(); }
-  virtual Real dp_dx() override { return (_e_cell->p() - _p_bc) / _dL_edge; }
+  virtual Real dp_dx() override { return (_e_cell->p() - pBCEdge::p_bc()) / _dL_edge; }
   virtual Real dp_dx_friction() override { return 0.5 * _e_cell->dp_friction() / _dL_edge; }
   virtual Real gravity() override { return 0.5 * _e_cell->dp_gravity() / _dL_edge; }
 
@@ -549,8 +556,10 @@ public:
 
   virtual void computeFluxes() override
   {
-    Real rho_bc = _eos->rho_from_p_T(_p_bc, _T_bc);
-    Real h_bc = _eos->h_from_p_T(_p_bc, _T_bc);
+    Real p_bc = pBCEdge::p_bc();
+    Real T_bc = pBCEdge::T_bc();
+    Real rho_bc = _eos->rho_from_p_T(p_bc, T_bc);
+    Real h_bc = _eos->h_from_p_T(p_bc, T_bc);
 
     if (_v > 0.0)
     {
@@ -560,14 +569,14 @@ public:
     }
     else
     {
-      _T_edge = _T_bc;
+      _T_edge = T_bc;
       _mass_flux = _v * rho_bc;
       _enthalpy_flux = _v * rho_bc * h_bc;
     }
   }
 
   virtual Real dv_dx() override { return (_v > 0.0) ? (_v - _w_edge->v()) / _w_cell->dL() : 0.0; }
-  virtual Real dp_dx() override { return (_p_bc - _w_cell->p()) / _dL_edge; }
+  virtual Real dp_dx() override { return (pBCEdge::p_bc() - _w_cell->p()) / _dL_edge; }
   virtual Real dp_dx_friction() override { return 0.5 * _w_cell->dp_friction() / _dL_edge; }
   virtual Real gravity() override { return 0.5 * _w_cell->dp_gravity() / _dL_edge; }
 

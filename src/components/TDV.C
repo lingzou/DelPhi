@@ -7,8 +7,8 @@ TDV::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
-  params.addRequiredParam<Real>("p_bc", "Pressure boundary value");
-  params.addRequiredParam<Real>("T_bc", "Temperature boundary value");
+  params.addRequiredParam<FunctionName>("p_bc", "Pressure boundary function");
+  params.addRequiredParam<FunctionName>("T_bc", "Temperature boundary function");
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
   params.addRequiredParam<std::vector<std::string>>("input", "Names of the connected components");
 
@@ -46,8 +46,8 @@ TDV::addPhysicalModel()
   pars.set<const SinglePhaseFluidProperties *>("eos") = _eos;
   pars.set<CellBase *>("west_cell") = inlet ? NULL : (comp_1d->getCells()).back();
   pars.set<CellBase *>("east_cell") = inlet ? (comp_1d->getCells()).front():  NULL;
-  pars.set<Real>("p_bc") = getParam<Real>("p_bc");
-  pars.set<Real>("T_bc") = getParam<Real>("T_bc");
+  pars.set<FunctionName>("p_bc") = getParam<FunctionName>("p_bc");
+  pars.set<FunctionName>("T_bc") = getParam<FunctionName>("T_bc");
 
   EdgeBase * edge = NULL;
   if (inlet)

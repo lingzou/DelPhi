@@ -46,6 +46,10 @@ protected:
   Real _flow_area;
   Real _dh;
   Real _qv;
+  bool _has_Tw;
+  Real _Tw;
+  Real _hw;
+  Real _aw;
   const SinglePhaseFluidProperties * _eos;
   Real _rho_ref, _rhoh_ref;
 

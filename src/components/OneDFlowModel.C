@@ -116,6 +116,31 @@ OneDCell::linearReconstruction(Real p_W, Real T_W, Real p_E, Real T_E)
   _h_e = _eos->h_from_p_T(_p_e, _T_e);
 }
 
+void
+OneDCell::linearReconstructionIrregularMesh()
+{
+  Real p_W = _w_cell->p();
+  Real T_W = _w_cell->T();
+  Real dL_W = _w_cell->dL();
+  Real p_E = _e_cell->p();
+  Real T_E = _e_cell->T();
+  Real dL_E = _e_cell->dL();
+
+  Real p_slope = DELPHI::SlopeLimiterIrregularMesh(p_W, _p, p_E, dL_W, _dL_cell, dL_E);
+  Real T_slope = DELPHI::SlopeLimiterIrregularMesh(T_W, _T, T_E, dL_W, _dL_cell, dL_E);
+
+  _p_w = _p - p_slope * 0.5 * _dL_cell;
+  _p_e = _p + _p - _p_w;
+
+  _T_w = _T - T_slope * 0.5 * _dL_cell;
+  _T_e = _T + _T - _T_w;
+
+  _rho_w = _eos->rho_from_p_T(_p_w, _T_w);
+  _rho_e = _eos->rho_from_p_T(_p_e, _T_e);
+  _h_w = _eos->h_from_p_T(_p_w, _T_w);
+  _h_e = _eos->h_from_p_T(_p_e, _T_e);
+}
+
 EdgeBase *
 OneDCell::getOtherSideEdge(EdgeBase * edge)
 {
@@ -307,8 +332,8 @@ vBCEdgeOutlet::vBCEdgeOutlet(const InputParameters & parameters) :
 
 pBCEdge::pBCEdge(const InputParameters & parameters) :
   boundaryEdge(parameters),
-  _p_bc(_pars.get<Real>("p_bc")),
-  _T_bc(_pars.get<Real>("T_bc"))
+  _p_bc(_sim.getFunction(_pars.get<FunctionName>("p_bc"))),
+  _T_bc(_sim.getFunction(_pars.get<FunctionName>("T_bc")))
 {
 }
 
