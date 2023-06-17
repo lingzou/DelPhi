@@ -1,6 +1,7 @@
 #include "SingleJunction.h"
 
 registerMooseObject("delphiApp", SingleJunction);
+registerMooseObject("delphiApp", SNJVelocityPPS);
 
 InputParameters
 SingleJunction::validParams()
@@ -10,6 +11,8 @@ SingleJunction::validParams()
   params.addRequiredParam<UserObjectName>("eos", "equation of states");
   params.addRequiredParam<std::vector<std::string>>("inputs", "Names of the inlet component");
   params.addRequiredParam<std::vector<std::string>>("outputs", "Names of the outlet component");
+
+  params.addParam<bool>("monitor", false, "flag to turn on/off data monitor");
 
   return params;
 }
@@ -89,4 +92,28 @@ SingleJunction::addPhysicalModel()
   pars_s.set<CellBase *>("east_cell") = NULL;
   EdgeBase * shadow_edge = new snjShadowEdge(pars_s);
   comp_1d_out->setBoundaryEdge(end_type_out, shadow_edge);
+
+  // data monitor
+  if (getParam<bool>("monitor"))
+  {
+    InputParameters pars_pps = _app.getFactory().getValidParams("SNJVelocityPPS");
+    pars_pps.set<std::vector<OutputName>>("outputs") = {"csv"};
+    pars_pps.set<snjEdge*>("snj") = edge;
+    _sim.addPostprocessor("SNJVelocityPPS", name()+":velocity", pars_pps);
+  }
+}
+
+/* Velocity PPS: this is a temporary solution, a more generic component-level data monitor process is needed.*/
+InputParameters
+SNJVelocityPPS::validParams()
+{
+  InputParameters params = GeneralPostprocessor::validParams();
+  params.addRequiredParam<snjEdge*>("snj", "SingleJunction where velocity is monitored");
+  return params;
+}
+
+SNJVelocityPPS::SNJVelocityPPS(const InputParameters & parameters)
+  : GeneralPostprocessor(parameters),
+  _snj(getParam<snjEdge*>("snj"))
+{
 }

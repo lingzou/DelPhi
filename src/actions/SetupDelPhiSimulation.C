@@ -35,9 +35,9 @@ SetupDelPhiSimulation::act()
   }
   else if (_current_task == "add_physical_model")
   {
-    Moose::out << "Add physical model... ";
+    Moose::out << "Add physical model..." << std::endl;
     sim_ptr->addPhysicalModel();
-    Moose::out << "OK" << std::endl;
+    Moose::out << "Add physical model...OK" << std::endl;
   }
   /*
   else if (_current_task == "setup_delphi_ICs")

@@ -148,6 +148,8 @@ DelPhiSimulation::addPhysicalModel()
   _p_PETScApp->n_dofs = _n_DOFs;
   _p_PETScApp->setupPETScWorkSpace();
   _p_PETScApp->setupPETScIC();
+
+  Moose::out << "  Total number of nonlinear DOFs: " << _n_DOFs << std::endl;
 }
 
 const SinglePhaseFluidProperties *

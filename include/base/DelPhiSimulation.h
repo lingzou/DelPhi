@@ -41,7 +41,7 @@ public:
   virtual void
   addComponent(const std::string & type, const std::string & name, InputParameters & params);
   virtual DelPhiComponent * getComponentByName(const std::string & name);
-  virtual DelPhiMesh & phoenix_mesh() { return _delphi_mesh; }
+  virtual DelPhiMesh & delphi_mesh() { return _delphi_mesh; }
 
   // Helper API functions
   virtual const SinglePhaseFluidProperties * getSinglePhaseEOS(const UserObjectName & name);

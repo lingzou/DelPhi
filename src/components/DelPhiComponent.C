@@ -16,7 +16,7 @@ DelPhiComponent::validParams()
 DelPhiComponent::DelPhiComponent(const InputParameters & parameters)
   : MooseObject(parameters),
     _sim(*getParam<DelPhiSimulation *>("_sim")),
-    _mesh(_sim.phoenix_mesh()),
+    _mesh(_sim.delphi_mesh()),
     _n_DOFs(0),
     _DOF_offset(0)
 {

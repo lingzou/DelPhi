@@ -66,4 +66,9 @@
     input = 'hydrostatic.i'
     exodiff = 'hydrostatic_out.e'
   []
+  [Welander]
+    type = 'CSVDiff'
+    input = 'Welander.i'
+    csvdiff = 'Welander_out.csv'
+  []
 []
