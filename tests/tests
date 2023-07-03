@@ -71,4 +71,9 @@
     input = 'Welander.i'
     csvdiff = 'Welander_out.csv'
   []
+  [simple_hs]
+    type = 'Exodiff'
+    input = 'simple_HS.i'
+    exodiff = 'simple_HS_out.e'
+  []
 []
