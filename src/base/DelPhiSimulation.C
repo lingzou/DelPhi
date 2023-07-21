@@ -92,7 +92,7 @@ DelPhiSimulation::buildMesh()
     it.second->buildMesh();
 
   _delphi_mesh.getMesh().set_spatial_dimension(3);
-  _delphi_mesh.prepare(true);
+  _delphi_mesh.prepare(nullptr);
 }
 
 void
