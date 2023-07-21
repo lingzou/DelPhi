@@ -4,11 +4,11 @@
 #include "SinglePhaseFluidProperties.h"
 #include "OneDFlowModel.h"
 
-class TestOneDFlow : public OneDComponent
+class OneDFlowChannel : public OneDComponent
 {
 public:
-  TestOneDFlow(const InputParameters & parameters);
-  virtual ~TestOneDFlow();
+  OneDFlowChannel(const InputParameters & parameters);
+  virtual ~OneDFlowChannel();
 
   virtual void buildMesh() override;
   virtual void addExternalVariables() override;

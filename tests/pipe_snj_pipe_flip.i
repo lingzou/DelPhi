@@ -18,7 +18,7 @@
   []
 
   [pipe-1]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0 0 0'
     orientation = '0 0 1'
     n_elems = 10
@@ -41,7 +41,7 @@
   []
 
   [pipe-2]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0 0 0.25'
     orientation = '0 0 1'
     n_elems = 10

@@ -12,7 +12,7 @@
 
 [Components]
   [pipe-bottom]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0 0 0'
     orientation = '1 0 0'
     order = 2
@@ -39,7 +39,7 @@
   []
 
   [pipe-right]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0.1 0 0'
     orientation = '0 0 1'
     order = 2
@@ -67,7 +67,7 @@
   []
 
   [pipe-top]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0.1 0 0.9'
     orientation = '-1 0 0'
     order = 2
@@ -94,7 +94,7 @@
   []
 
   [pipe-left]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0 0 0.9'
     orientation = '0 0 -1'
     order = 2
@@ -119,7 +119,7 @@
   []
 
   [pipe-tdv]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0.1 0 0.9'
     orientation = '1 0 0'
     order = 2

@@ -1,12 +1,12 @@
 #include "SystemBase.h" // for access solution
-#include "TestOneDFlow.h"
+#include "OneDFlowChannel.h"
 #include "OneDFlowModel.h"
 #include "DelPhiTypes.h"
 
-registerMooseObject("delphiApp", TestOneDFlow);
+registerMooseObject("delphiApp", OneDFlowChannel);
 
 InputParameters
-TestOneDFlow::validParams()
+OneDFlowChannel::validParams()
 {
   InputParameters params = OneDComponent::validParams();
 
@@ -38,7 +38,7 @@ TestOneDFlow::validParams()
   return params;
 }
 
-TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
+OneDFlowChannel::OneDFlowChannel(const InputParameters & parameters)
   : OneDComponent(parameters),
     _order(getParam<unsigned>("order")),
     _length(getParam<Real>("length")),
@@ -56,14 +56,14 @@ TestOneDFlow::TestOneDFlow(const InputParameters & parameters)
     mooseError("'f' and 'WF_user_option' cannot be both specified.");
 }
 
-TestOneDFlow::~TestOneDFlow()
+OneDFlowChannel::~OneDFlowChannel()
 {
   for(auto& cell : _cells)   delete cell;
   for(auto& edge : _edges)   delete edge;
 }
 
 void
-TestOneDFlow::buildMesh()
+OneDFlowChannel::buildMesh()
 {
   const std::vector<Real> & pos = getParam<std::vector<Real>>("position");
   const std::vector<Real> & dir = getParam<std::vector<Real>>("orientation");
@@ -101,7 +101,7 @@ TestOneDFlow::buildMesh()
 }
 
 void
-TestOneDFlow::addPhysicalModel()
+OneDFlowChannel::addPhysicalModel()
 {
   _n_DOFs = (_n_elem) + (_n_elem) + (_n_elem + 1); // p + T + v
 
@@ -151,7 +151,7 @@ TestOneDFlow::addPhysicalModel()
 }
 
 void
-TestOneDFlow::addExternalVariables()
+OneDFlowChannel::addExternalVariables()
 {
   _sim.addMooseAuxVar("p", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
   _sim.addMooseAuxVar("T", FEType(CONSTANT, MONOMIAL), {_subdomain_name});
@@ -162,7 +162,7 @@ TestOneDFlow::addExternalVariables()
 }
 
 void
-TestOneDFlow::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
+OneDFlowChannel::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
 {
   if (end == DELPHI::IN)
   {
@@ -179,14 +179,14 @@ TestOneDFlow::setBoundaryEdge(DELPHI::EEndType end, EdgeBase* edge)
 }
 
 void
-TestOneDFlow::setExtendedNeighbors()
+OneDFlowChannel::setExtendedNeighbors()
 {
   for(auto& cell : _cells)  cell->setExtendedNeighborCells();
   for(auto& edge : _edges)  edge->setExtendedNeighborEdges();
 }
 
 void
-TestOneDFlow::setupIC(double * u)
+OneDFlowChannel::setupIC(double * u)
 {
   // setup initial conditions
   Real v_init = getParam<Real>("initial_V");
@@ -211,7 +211,7 @@ TestOneDFlow::setupIC(double * u)
 }
 
 void
-TestOneDFlow::updateSolution(double * u)
+OneDFlowChannel::updateSolution(double * u)
 {
   unsigned idx = 0;
   for(unsigned i = 0; i < _n_elem + 1; i++)
@@ -234,7 +234,7 @@ TestOneDFlow::updateSolution(double * u)
 }
 
 void
-TestOneDFlow::highOrderReconstruction()
+OneDFlowChannel::highOrderReconstruction()
 {
   if (_order == 1) return;
   if (_n_elem < 2) return;
@@ -269,7 +269,7 @@ TestOneDFlow::highOrderReconstruction()
 }
 
 void
-TestOneDFlow::computeHelperVariables()
+OneDFlowChannel::computeHelperVariables()
 {
   for(auto& edge : _edges)
     edge->computeFluxes();
@@ -279,7 +279,7 @@ TestOneDFlow::computeHelperVariables()
 }
 
 void
-TestOneDFlow::computeTranRes(double * res)
+OneDFlowChannel::computeTranRes(double * res)
 {
   unsigned idx = 0;
   for(unsigned i = 0; i < _n_elem + 1; i++)
@@ -295,7 +295,7 @@ TestOneDFlow::computeTranRes(double * res)
 }
 
 void
-TestOneDFlow::computeSpatialRes(double * res)
+OneDFlowChannel::computeSpatialRes(double * res)
 {
   // Momentum equations RHS
   for(unsigned i = 0; i < _n_elem + 1; i++) // loop on edges
@@ -331,12 +331,12 @@ TestOneDFlow::computeSpatialRes(double * res)
 }
 
 void
-TestOneDFlow::onTimestepBegin()
+OneDFlowChannel::onTimestepBegin()
 {
 }
 
 void
-TestOneDFlow::onTimestepEnd()
+OneDFlowChannel::onTimestepEnd()
 {
   // save old solutions
   for(auto& cell : _cells)  cell->saveOldSlns();
@@ -388,7 +388,7 @@ TestOneDFlow::onTimestepEnd()
 }
 
 void
-TestOneDFlow::writeTextOutput()
+OneDFlowChannel::writeTextOutput()
 {
   FILE * file = _sim.getTextOutputFile();
 
@@ -409,7 +409,7 @@ TestOneDFlow::writeTextOutput()
 }
 
 void
-TestOneDFlow::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
+OneDFlowChannel::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
 {
   for(auto& cell : _cells)
   {

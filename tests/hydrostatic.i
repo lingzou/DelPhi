@@ -14,7 +14,7 @@
   []
 
   [pipe]
-    type = TestOneDFlow
+    type = OneDFlowChannel
     position = '0 0 0'
     orientation = '0 0 1'
     n_elems = 20
