@@ -17,6 +17,10 @@
     elem_number_axial = 4
     elem_number_width = 20
     solid = const_solid
+
+    # boundary condition
+    T_bc_left = 0
+    T_bc_right = 0
   []
 []
 

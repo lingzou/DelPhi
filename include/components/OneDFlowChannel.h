@@ -4,6 +4,8 @@
 #include "SinglePhaseFluidProperties.h"
 #include "OneDFlowModel.h"
 
+class SimpleHeatStructure;
+
 class OneDFlowChannel : public OneDComponent
 {
 public:
@@ -36,6 +38,13 @@ public:
   // text-based output
   virtual void writeTextOutput() override;
 
+  // conjugate heat transfer
+  virtual void addWallHeating(SimpleHeatStructure * hs, unsigned side)
+  {
+    // unsigned side will be enum
+    _hs = hs; _hs_side = side;
+  }
+
 protected:
   unsigned _order;
 
@@ -60,6 +69,9 @@ protected:
   SubdomainName _subdomain_name;
   std::vector<Node *> _nodes;
   std::vector<Elem *> _elems;
+
+  SimpleHeatStructure * _hs;
+  unsigned _hs_side;
 
 public:
   static InputParameters validParams();

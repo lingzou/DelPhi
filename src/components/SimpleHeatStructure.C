@@ -16,6 +16,13 @@ SimpleHeatStructure::validParams()
   params.addRequiredParam<unsigned>("elem_number_axial", "number of element in the axial direction");
   params.addRequiredParam<unsigned>("elem_number_width", "number of element in the width/radial direction");
   params.addRequiredParam<UserObjectName>("solid", "solid property UserObject name");
+
+  // boundary conditions
+  params.addParam<Real>("T_bc_left", "User-specified temperature at left boundary");
+  params.addParam<Real>("T_bc_right", "User-specified temperature at right boundary");
+
+  params.addParam<std::string>("name_comp_left", "The name of the left flow component");
+  params.addParam<std::string>("name_comp_right", "The name of the right flow component");
   return params;
 }
 
@@ -28,6 +35,8 @@ SimpleHeatStructure::SimpleHeatStructure(const InputParameters & parameters)
     _dL(_length / _NL),
     _dW(_width / _NW)
 {
+  _T_bc_left = isParamValid("T_bc_left") ? getParam<Real>("T_bc_left") : 0.0;
+  _T_bc_right = isParamValid("T_bc_right") ? getParam<Real>("T_bc_right") : 0.0;
 }
 
 void
@@ -105,8 +114,14 @@ SimpleHeatStructure::addPhysicalModel()
 {
   // _Ts is arranged as _Ts[Y/axial][X/radial], so when using one-dimensional assumption, the matrix is denser
   _Ts.resize(_NL);
-  for (unsigned i = 0; i < _Ts.size(); i++)
-    _Ts[i].resize(_NW + 1, 0.0);
+  _Ts_DOFs.resize(_NL);
+  for (unsigned j = 0; j < _Ts.size(); j++)
+  {
+    _Ts[j].resize(_NW + 1, 0.0);
+
+    for (unsigned i = 0; i < _NW + 1; i++)
+      _Ts_DOFs[j].push_back(j * (_NW + 1) + i + _DOF_offset);
+  }
 
   _Ts_old = _Ts;
   _Ts_oo = _Ts;
@@ -119,6 +134,22 @@ SimpleHeatStructure::addPhysicalModel()
   _n_DOFs = (_NW + 1) * _NL;
 
   _solid = &(_sim.getUserObject<ThermalSolidProperties>(getParam<UserObjectName>("solid")));
+
+  // coupling
+  if (isParamValid("name_comp_left"))
+  {
+    std::string comp_name = getParam<std::string>("name_comp_left");
+    _pipe_left = dynamic_cast<OneDFlowChannel *>(_sim.getComponentByName(comp_name));
+    if (_pipe_left)
+      _pipe_left->addWallHeating(this, 0);
+  }
+  if (isParamValid("name_comp_right"))
+  {
+    std::string comp_name = getParam<std::string>("name_comp_right");
+    _pipe_right = dynamic_cast<OneDFlowChannel *>(_sim.getComponentByName(comp_name));
+    if (_pipe_right)
+      _pipe_right->addWallHeating(this, 1);
+  }
 }
 
 void
@@ -153,12 +184,14 @@ SimpleHeatStructure::computeTranRes(double * res)
       res[j * (_NW + 1) + i] = _volume[j][i] * rho * cp * dT_dt;
     }
 
-  // west and east boundary DirichletBC
-  for (unsigned j = 0; j < _NL; j++)
-  {
-    res[j * (_NW + 1) + 0] = 0;
-    res[j * (_NW + 1) + _NW] = 0;
-  }
+  // (optional, if applicable) west and east boundary DirichletBC, zero transient residual
+  if (isParamValid("T_bc_left"))
+    for (unsigned j = 0; j < _NL; j++)
+      res[j * (_NW + 1) + 0] = 0;
+
+  if (isParamValid("T_bc_right"))
+    for (unsigned j = 0; j < _NL; j++)
+      res[j * (_NW + 1) + _NW] = 0;
 }
 
 void
@@ -189,12 +222,36 @@ SimpleHeatStructure::computeSpatialRes(double * res)
       res[j * (_NW + 1) + i] -= q_vol * _volume[j][i];
     }
 
-  // west and east boundary DirichletBC
-  for (unsigned j = 0; j < _NL; j++)
+  // convective heat transfer
+  if (_pipe_left)
   {
-    res[j * (_NW + 1) + 0] = _Ts[j][0] - 0.0;
-    res[j * (_NW + 1) + _NW] = _Ts[j][_NW] - 0.0;
+    std::vector<OneDCell*> & fluid_cells = _pipe_left->getCells();
+    for (unsigned j = 0; j < _NL; j++)
+    {
+      Real T_fluid = fluid_cells[j]->T();
+      Real q_flux_out = 1000 * (_Ts[j][0] - T_fluid);
+      res[j * (_NW + 1) + 0] += q_flux_out * _dL;
+    }
   }
+  if (_pipe_right)
+  {
+    std::vector<OneDCell*> & fluid_cells = _pipe_right->getCells();
+    for (unsigned j = 0; j < _NL; j++)
+    {
+      Real T_fluid = fluid_cells[j]->T();
+      Real q_flux_out = 1000 * (_Ts[j][_NW] - T_fluid);
+      res[j * (_NW + 1) + _NW] += q_flux_out * _dL;
+    }
+  }
+
+  // (optional, if applicable) apply west and east boundary DirichletBC
+  if (isParamValid("T_bc_left"))
+    for (unsigned j = 0; j < _NL; j++)
+      res[j * (_NW + 1) + 0] = _Ts[j][0] - _T_bc_left;
+
+  if (isParamValid("T_bc_right"))
+    for (unsigned j = 0; j < _NL; j++)
+      res[j * (_NW + 1) + _NW] = _Ts[j][_NW] - _T_bc_right;
 }
 
 void
@@ -227,12 +284,36 @@ SimpleHeatStructure::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
   for (unsigned j = 0; j < _NL; j++)
     for (unsigned i = 0; i < _NW + 1; i++)
     {
-      int row = j * (_NW + 1) + i;
+      int row = Ts_DOF(j, i); //j * (_NW + 1) + i;
       // SELF
-      mnzp->addEntry(row + _DOF_offset, row + _DOF_offset);
+      //mnzp->addEntry(row + _DOF_offset, row + _DOF_offset);
+      mnzp->addEntry(row, row);
       if (i > 0) // WEST
-        mnzp->addEntry(row + _DOF_offset, row - 1 + _DOF_offset);
+        //mnzp->addEntry(row + _DOF_offset, row - 1 + _DOF_offset);
+        mnzp->addEntry(row, Ts_DOF(j, i-1));
       if (i < _NW) // EAST
-        mnzp->addEntry(row + _DOF_offset, row + 1 + _DOF_offset);
+        //mnzp->addEntry(row + _DOF_offset, row + 1 + _DOF_offset);
+        mnzp->addEntry(row, Ts_DOF(j, i+1));
     }
+
+  if (_pipe_left)
+  {
+    std::vector<OneDCell*> & fluid_cells = _pipe_left->getCells();
+    for (unsigned j = 0; j < _NL; j++)
+    {
+      //int row = j * (_NW + 1) + 0;
+      //mnzp->addEntry(row + _DOF_offset, fluid_cells[j]->TDOF());
+      mnzp->addEntry(Ts_DOF(j, 0), fluid_cells[j]->TDOF());
+    }
+  }
+  if (_pipe_right)
+  {
+    std::vector<OneDCell*> & fluid_cells = _pipe_right->getCells();
+    for (unsigned j = 0; j < _NL; j++)
+    {
+      //int row = j * (_NW + 1) + _NW;
+      //mnzp->addEntry(row + _DOF_offset, fluid_cells[j]->TDOF());
+      mnzp->addEntry(Ts_DOF(j, _NW), fluid_cells[j]->TDOF());
+    }
+  }
 }

@@ -1,5 +1,6 @@
 #include "SystemBase.h" // for access solution
 #include "OneDFlowChannel.h"
+#include "SimpleHeatStructure.h"
 #include "OneDFlowModel.h"
 #include "DelPhiTypes.h"
 
@@ -326,6 +327,14 @@ OneDFlowChannel::computeSpatialRes(double * res)
 
     if (_has_Tw)
       res_energy -= _hw * _aw * (_Tw - _cells[i]->T());
+
+    if (_hs)
+    {
+      std::vector<std::vector<Real>> & Ts = _hs->Ts();
+      Real Tw = (_hs_side == 0) ? Ts[i].front() : Ts[i].back();
+      res_energy -= 1000.0 * 200.0 * (Tw - _cells[i]->T());
+    }
+
     res[3*i+2] = res_energy / _rhoh_ref;
   }
 }
@@ -419,5 +428,15 @@ OneDFlowChannel::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
   for(auto& edge : _edges)
   {
     mnzp->addRow(edge->vDOF(), edge->getConnectedDOFs());
+  }
+
+  if (_hs)
+  {
+    std::vector<std::vector<unsigned>> & Ts_DOFs = _hs->Ts_DOFs();
+    for (unsigned j = 0; j < _cells.size(); j++)
+    {
+      unsigned Ts_DOF = (_hs_side == 0) ? Ts_DOFs[j].front() : Ts_DOFs[j].back();
+      mnzp->addEntry(_cells[j]->TDOF(), Ts_DOF);
+    }
   }
 }

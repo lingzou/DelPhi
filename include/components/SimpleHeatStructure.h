@@ -16,6 +16,11 @@ public:
   virtual void onTimestepBegin() override;
   virtual void onTimestepEnd() override;
 
+  // data access
+  virtual std::vector<std::vector<Real>> & Ts() { return _Ts; }
+  virtual unsigned Ts_DOF(unsigned j, unsigned i) { return j * (_NW + 1) + i + _DOF_offset; }
+  virtual std::vector<std::vector<unsigned>> & Ts_DOFs() { return _Ts_DOFs; }
+
   // Residual-related functions
   virtual void updateSolution(double * u) override;
   virtual void computeTranRes(double * r) override;
@@ -45,10 +50,20 @@ protected:
   std::vector<std::vector<Real>> _Ts_old;
   std::vector<std::vector<Real>> _Ts_oo;
 
+  std::vector<std::vector<unsigned>> _Ts_DOFs;
+
+  // mesh related data
   unsigned _subdomain_id;
   SubdomainName _subdomain_name;
   std::vector<std::vector<Node *>> _nodes;
   std::vector<std::vector<Elem *>> _elems;
+
+  // boundary condition related data
+  Real _T_bc_left;
+  Real _T_bc_right;
+
+  OneDFlowChannel * _pipe_left;
+  OneDFlowChannel * _pipe_right;
 
 public:
   static InputParameters validParams();
