@@ -32,7 +32,7 @@ public:
 
   virtual void initialize() override {}
   virtual void execute() override {}
-  virtual Real getValue() override { return _snj->v(); }
+  virtual Real getValue() const override { return _snj->v(); }
 
 protected:
   snjEdge * _snj;

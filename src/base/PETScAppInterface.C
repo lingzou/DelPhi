@@ -39,7 +39,7 @@ PETScApp::setupPETScWorkSpace()
   PC pc;
   KSPGetPC(ksp, &pc);
   PCFactorSetMatOrderingType(pc, MATORDERINGRCM);
-  PCFactorSetLevels(pc, 5);
+  // PCFactorSetLevels(pc, 5);
   KSPGMRESSetRestart(ksp, ksp_maxits);
   KSPSetTolerances(ksp, ksp_rtol, PETSC_DEFAULT, PETSC_DEFAULT, ksp_maxits);
 

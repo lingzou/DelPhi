@@ -39,10 +39,11 @@ public:
   virtual void writeTextOutput() override;
 
   // conjugate heat transfer
-  virtual void addWallHeating(SimpleHeatStructure * hs, unsigned side)
+  virtual void addWallHeating(SimpleHeatStructure * hs, Real hw, Real aw, unsigned side)
   {
     // unsigned side will be enum
-    _hs = hs; _hs_side = side;
+    _hs.push_back(hs); _hs_side.push_back(side);
+    _hws.push_back(hw); _aws.push_back(aw);
   }
 
 protected:
@@ -70,8 +71,10 @@ protected:
   std::vector<Node *> _nodes;
   std::vector<Elem *> _elems;
 
-  SimpleHeatStructure * _hs;
-  unsigned _hs_side;
+  std::vector<SimpleHeatStructure *> _hs;
+  std::vector<unsigned> _hs_side;
+  std::vector<Real> _hws;
+  std::vector<Real> _aws;
 
 public:
   static InputParameters validParams();

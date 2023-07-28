@@ -71,9 +71,28 @@
     input = 'Welander.i'
     csvdiff = 'Welander_out.csv'
   []
-  [simple_hs]
+  [simple_hs_option_1]
     type = 'Exodiff'
     input = 'simple_HS.i'
-    exodiff = 'simple_HS_out.e'
+    cli_args = 'Components/hs/type=SimpleHeatStructure Outputs/file_base=simple_HS_option_1'
+    exodiff = 'simple_HS_option_1.e'
+  []
+  [simple_hs_option_2]
+    type = 'Exodiff'
+    input = 'simple_HS.i'
+    cli_args = 'Components/hs/type=SimpleHeatStructure2 Outputs/file_base=simple_HS_option_2'
+    exodiff = 'simple_HS_option_2.e'
+  []
+  [hs_1dflow_CHT_option_1]
+    type = 'Exodiff'
+    input = 'HS_OneDFlow_CHT.i'
+    cli_args = 'Components/hs/type=SimpleHeatStructure Outputs/file_base=HS_OneDFlow_CHT_option_1'
+    exodiff = 'HS_OneDFlow_CHT_option_1.e'
+  []
+  [hs_1dflow_CHT_option_2]
+    type = 'Exodiff'
+    input = 'HS_OneDFlow_CHT.i'
+    cli_args = 'Components/hs/type=SimpleHeatStructure2 Outputs/file_base=HS_OneDFlow_CHT_option_2'
+    exodiff = 'HS_OneDFlow_CHT_option_2.e'
   []
 []

@@ -102,7 +102,7 @@ DelPhiSimulation::addExternalVariables()
   // From experiments, it seems to be too late to do so in ExternalProblem::solve()
   // and this is the right place to setup PETSc options
   // We may need find a better place (i.e., creating a new function) for this operation
-  Moose::PetscSupport::petscSetOptions(*this);
+  Moose::PetscSupport::petscSetOptions(_petsc_options, _solver_params);
 
   for (auto & it : _comp_by_name)
     it.second->addExternalVariables();
@@ -146,6 +146,13 @@ DelPhiSimulation::addPhysicalModel()
     it.second->setExtendedNeighbors();
 
   _p_PETScApp->n_dofs = _n_DOFs;
+
+  // test, will figure out how to feed these info to PETSc
+  // Executioner * exec = _app.getExecutioner();
+  // Transient * transient = dynamic_cast<Transient *>(exec);
+  // if (transient)
+  //   std::cerr << "l_tol = " << transient->getParam<Real>("l_tol");
+
   _p_PETScApp->setupPETScWorkSpace();
   _p_PETScApp->setupPETScIC();
 

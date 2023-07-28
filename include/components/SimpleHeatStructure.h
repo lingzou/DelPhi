@@ -17,9 +17,21 @@ public:
   virtual void onTimestepEnd() override;
 
   // data access
-  virtual std::vector<std::vector<Real>> & Ts() { return _Ts; }
-  virtual unsigned Ts_DOF(unsigned j, unsigned i) { return j * (_NW + 1) + i + _DOF_offset; }
-  virtual std::vector<std::vector<unsigned>> & Ts_DOFs() { return _Ts_DOFs; }
+  virtual unsigned Ts_DOF(unsigned j, unsigned i) { return _Ts_DOFs[j][i]; }
+
+  virtual Real Tw(unsigned j, unsigned side)
+  {
+    if (side == 0)        return _Tw_left[j];
+    else if (side == 1)   return _Tw_right[j];
+    else                  { mooseError("error"); return 0.0; }
+  }
+
+  virtual unsigned Tw_DOF(unsigned j, unsigned side)
+  {
+    if (side == 0)        return _Tw_left_DOFs[j]; // Tw_left_DOF_local(j) + _DOF_offset;
+    else if (side == 1)   return _Tw_right_DOFs[j]; // Tw_right_DOF_local(j) + _DOF_offset;
+    else                  { mooseError("error"); return 0; }
+  } 
 
   // Residual-related functions
   virtual void updateSolution(double * u) override;
@@ -28,7 +40,10 @@ public:
 
   virtual void FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp) override;
 
-  // don't worry, SimpleHeatStructure will be inherited from a different type of base component
+    // text-based output
+  virtual void writeTextOutput() override;
+
+  // don't worry, SimpleHeatStructure2 will be inherited from a different type of base component
   // for now, let's keep these functions
   virtual std::vector<OneDCell*> & getCells() override { mooseError("Error"); }
   virtual std::vector<EdgeBase*> & getEdges() override { mooseError("Error"); }
@@ -38,10 +53,12 @@ public:
 protected:
   Real _length;
   Real _width;
+  Real _depth;
   unsigned _NL;
   unsigned _NW;
   Real _dL;
   Real _dW;
+  Real _qv;
 
   const ThermalSolidProperties * _solid;
 
@@ -50,7 +67,12 @@ protected:
   std::vector<std::vector<Real>> _Ts_old;
   std::vector<std::vector<Real>> _Ts_oo;
 
+  std::vector<Real> _Tw_left;
+  std::vector<Real> _Tw_right;
+
   std::vector<std::vector<unsigned>> _Ts_DOFs;
+  std::vector<unsigned> _Tw_left_DOFs;
+  std::vector<unsigned> _Tw_right_DOFs;
 
   // mesh related data
   unsigned _subdomain_id;
@@ -64,6 +86,15 @@ protected:
 
   OneDFlowChannel * _pipe_left;
   OneDFlowChannel * _pipe_right;
+  Real _hw_left;
+  Real _hw_right;
+
+  Real _Q_internal;
+  Real _Q_out_left;
+  Real _Q_out_right;
+
+  Real _rho_ref;
+  Real _cp_ref;
 
 public:
   static InputParameters validParams();

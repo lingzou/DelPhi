@@ -323,20 +323,24 @@ OneDFlowChannel::computeSpatialRes(double * res)
     EdgeBase * e_edge = _cells[i]->eEdge();
 
     res[3*i+1] = (e_edge->mass_flux() - w_edge->mass_flux()) / _dL / _rho_ref;
-    Real res_energy = (e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - _qv;
+    res[3*i+2] = (e_edge->enthalpy_flux() - w_edge->enthalpy_flux()) / _dL - _qv;
 
     if (_has_Tw)
-      res_energy -= _hw * _aw * (_Tw - _cells[i]->T());
-
-    if (_hs)
-    {
-      std::vector<std::vector<Real>> & Ts = _hs->Ts();
-      Real Tw = (_hs_side == 0) ? Ts[i].front() : Ts[i].back();
-      res_energy -= 1000.0 * 200.0 * (Tw - _cells[i]->T());
-    }
-
-    res[3*i+2] = res_energy / _rhoh_ref;
+      res[3*i+2] -= _hw * _aw * (_Tw - _cells[i]->T());
   }
+
+  for (unsigned k = 0; k < _hs.size(); k++)
+  {
+    for(unsigned i = 0; i < _n_elem; i++) //loop on elements
+    {
+      Real Tw = _hs[k]->Tw(i, _hs_side[k]);
+      res[3*i+2] -= _hws[k] * _aws[k] * (Tw - _cells[i]->T());
+    }
+  }
+
+  // scaling
+  for(unsigned i = 0; i < _n_elem; i++)
+    res[3*i+2] /= _rhoh_ref;
 }
 
 void
@@ -414,6 +418,36 @@ OneDFlowChannel::writeTextOutput()
                                                           _edges[i]->T_edge(),
                                                           _edges[i]->mass_flux() * _flow_area,
                                                           _edges[i]->enthalpy_flux() * _flow_area);
+  //
+  fprintf(file, "Mass/energy balance:\n");
+  Real mass_in = _edges.front()->mass_flux() * _flow_area;
+  Real mass_out = _edges.back()->mass_flux() * _flow_area;
+  fprintf(file, "  Mass flow in  [kg/s]: %20.8e\n", mass_in);
+  fprintf(file, "  Mass flow out [kg/s]: %20.8e\n", mass_out);
+  fprintf(file, "  Mass balance (gain) [kg/s]: %20.8e\n\n", mass_in - mass_out);
+
+  Real enthalpy_in = _edges.front()->enthalpy_flux() * _flow_area;
+  Real enthalpy_out = _edges.back()->enthalpy_flux() * _flow_area;
+  fprintf(file, "  Enthalpy flow in  [J/s]: %20.8e\n", enthalpy_in);
+  fprintf(file, "  Enthalpy flow out [J/s]: %20.8e\n", enthalpy_out);
+  //fprintf(file, "  Net enthalpy gain [J/s]: %20.8e\n", enthalpy_in - enthalpy_out);
+  Real internal_heating = _qv * _flow_area * _length;
+  fprintf(file, "  Internal heating [W]: %20.8e\n", internal_heating);
+
+  Real energy_gain = enthalpy_in - enthalpy_out + internal_heating;
+  for (unsigned k = 0; k < _hs.size(); k++)
+  {
+    Real Qw = 0.0;
+    for(unsigned i = 0; i < _n_elem; i++) //loop on elements
+    {
+      //Real Tw = (_hs_side[k] == 0) ? Ts[i].front() : Ts[i].back();
+      Real Tw = _hs[k]->Tw(i, _hs_side[k]);
+      Qw += _hws[k] * _aws[k] * (Tw - _cells[i]->T()) * _flow_area * _dL;
+    }
+    energy_gain += Qw;
+    fprintf(file, "  Wall heating [W]: %20.8e\n", Qw);
+  }
+  fprintf(file, "  Energy balance (gain) [W]: %20.8e\n", energy_gain);
   fprintf(file, "\n");
 }
 
@@ -430,12 +464,11 @@ OneDFlowChannel::FillJacobianMatrixNonZeroEntry(MatrixNonZeroPattern * mnzp)
     mnzp->addRow(edge->vDOF(), edge->getConnectedDOFs());
   }
 
-  if (_hs)
+  for (unsigned k = 0; k < _hs.size(); k++)
   {
-    std::vector<std::vector<unsigned>> & Ts_DOFs = _hs->Ts_DOFs();
     for (unsigned j = 0; j < _cells.size(); j++)
     {
-      unsigned Ts_DOF = (_hs_side == 0) ? Ts_DOFs[j].front() : Ts_DOFs[j].back();
+      unsigned Ts_DOF = _hs[k]->Tw_DOF(j, _hs_side[k]);
       mnzp->addEntry(_cells[j]->TDOF(), Ts_DOF);
     }
   }

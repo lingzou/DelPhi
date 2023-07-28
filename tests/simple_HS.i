@@ -17,6 +17,8 @@
     elem_number_axial = 4
     elem_number_width = 20
     solid = const_solid
+    Ts_init = 0
+    heat_source_solid = 100
 
     # boundary condition
     T_bc_left = 0
@@ -36,5 +38,7 @@
 []
 
 [Outputs]
+  perf_graph = true
   exodus = true
+  file_base = simple_HS_option_1
 []
